@@ -1,0 +1,20 @@
+{
+  "name": "mobile-live-view",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local browser-based live view and remote control for a connected Android device, using scrcpy-server over adb.",
+  "type": "commonjs",
+  "main": "src/server/index.js",
+  "scripts": {
+    "check-adb": "node scripts/check-adb.js",
+    "pair-wireless": "node scripts/pair-wireless.js",
+    "fetch-scrcpy-server": "node scripts/fetch-scrcpy-server.js",
+    "phase1": "node scripts/phase1-raw-bytes.js",
+    "start": "node src/server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "qrcode": "^1.5.4",
+    "ws": "^8.18.0"
+  }
+}

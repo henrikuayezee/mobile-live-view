@@ -1,0 +1,11 @@
+# Windows batch files must keep CRLF endings. With LF-only endings cmd.exe
+# mis-parses them line by line and the launcher fails in a way that is very
+# hard to diagnose (a console window that opens and closes instantly).
+*.bat text eol=crlf
+
+# Keep everything else normalized to LF in the repository.
+*.js   text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.md   text eol=lf

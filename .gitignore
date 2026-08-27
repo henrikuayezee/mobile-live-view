@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Local machine configuration (adb paths, ports, device serial)
+.env
+
+# Downloaded at setup time by `npm run fetch-scrcpy-server`, not source.
+# Apache-2.0 binary from the scrcpy project; fetched and checksum-verified
+# rather than vendored so the repo stays source-only.
+vendor/*.jar
+
+# Remembers the last connected device serial
+vendor/last-device.json
+
+# Scratch/debug output
+*.log
+debug.log
+screen.png

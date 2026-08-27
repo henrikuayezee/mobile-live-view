@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Mobile Live View — Settings</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="settings-page">
+  <div class="settings-wrap">
+    <header class="settings-header">
+      <h1>Settings</h1>
+      <a class="back-link" href="index.html">&larr; Back to live view</a>
+    </header>
+
+    <section>
+      <div class="section-head">
+        <h2>Devices</h2>
+        <button id="refresh" class="secondary">Refresh</button>
+      </div>
+      <p id="current-status" class="muted">Loading...</p>
+      <ul id="device-list" class="device-list"></ul>
+    </section>
+
+    <section>
+      <h2>Connect over USB</h2>
+      <p class="muted">
+        The most reliable option, and immune to the Wi-Fi drop-outs that end a
+        wireless session. Plug the phone in, enable Developer options &rarr;
+        USB debugging, then accept the "Allow USB debugging?" prompt on the
+        phone. It appears in the list above as a USB device; press Refresh if
+        it does not show up straight away.
+      </p>
+    </section>
+
+    <section>
+      <h2>Pair with a QR code</h2>
+      <p class="muted">
+        Easiest option, nothing to type. On the phone: Settings &rarr; Developer
+        options &rarr; Wireless debugging &rarr; "Pair device with QR code",
+        then point it at the code below.
+      </p>
+      <div class="qr-area">
+        <button id="qr-start">Show pairing QR code</button>
+        <div id="qr-box" class="qr-box" hidden>
+          <img id="qr-img" alt="Pairing QR code" width="320" height="320" />
+          <p id="qr-status" class="muted"></p>
+          <button id="qr-cancel" class="secondary">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Or pair with a code</h2>
+      <p class="muted">
+        On the phone: Settings &rarr; Developer options &rarr; Wireless debugging &rarr;
+        "Pair device with pairing code". Enter the address and code shown there.
+      </p>
+      <div class="pair-form">
+        <input id="pair-addr" type="text" placeholder="192.168.0.82:43971" />
+        <input id="pair-code" type="text" placeholder="123456" maxlength="6" />
+        <button id="pair-btn">Pair</button>
+      </div>
+      <p id="pair-result" class="muted"></p>
+    </section>
+  </div>
+  <script type="module" src="settings.js"></script>
+</body>
+</html>

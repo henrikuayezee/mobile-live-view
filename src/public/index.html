@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Mobile Live View</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="stage">
+    <canvas id="screen"></canvas>
+  </div>
+  <aside id="rail">
+    <div id="status">Connecting...</div>
+    <div class="rail-controls">
+      <button id="nav-recents" title="Recent apps">&#9633;</button>
+      <button id="nav-home" title="Home">&#9679;</button>
+      <button id="nav-back" title="Back">&#9664;</button>
+    </div>
+    <div class="rail-controls">
+      <button id="fullscreen" title="Fullscreen (F)">&#9974;</button>
+      <a class="settings-link" href="settings.html" title="Settings">&#9881;</a>
+    </div>
+  </aside>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
