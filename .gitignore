@@ -12,6 +12,9 @@ vendor/*.jar
 # Remembers the last connected device serial
 vendor/last-device.json
 
+# Remembers the user's chosen picture-quality settings
+vendor/quality-settings.json
+
 # Scratch/debug output
 *.log
 debug.log

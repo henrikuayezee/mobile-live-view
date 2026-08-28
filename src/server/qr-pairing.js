@@ -81,7 +81,7 @@ class QrPairingSession {
         if (match) {
           this.message = "Phone found, pairing...";
           try {
-            await adb.pair(adbBinary, match.address, this.password);
+            await adb.pair(this._adbBinary, match.address, this.password);
             this.state = "paired";
             this.pairedAddress = match.address;
             this.message = `Paired with ${match.address}.`;

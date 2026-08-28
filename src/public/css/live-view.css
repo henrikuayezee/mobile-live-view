@@ -1,0 +1,328 @@
+/* Live view: stage + variant B (slim rail + slide-out panel). */
+
+#mlv-body-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+}
+
+/* --- Stage --- */
+
+#stage {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  background: var(--stage-bg);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Handset frame — a wrapper, deliberately separate from the canvas. Putting
+   the bezel's padding/gradient/radius directly on the canvas (an earlier
+   version of this file did) fights the canvas's own sizing and was the
+   actual cause of the phone rendering much smaller than available space,
+   with dead black stage showing around it. The frame gets a real
+   `aspect-ratio` (set by decoder.js from the actual stream dimensions),
+   which lets height:100%/max-width:100% correctly pick whichever
+   dimension actually binds — a tall narrow window vs. a short wide one —
+   without extra layout math; the canvas then just fills the frame at 100%.
+
+   showBezel="off" (screenshot mode, no chrome) means: no padding, no
+   frame decoration, square corners, no shadow — toggle by adding the
+   .no-bezel class to #phone-frame. */
+
+#phone-frame {
+  position: relative;
+  /* Set dynamically by decoder.js once the real stream dimensions are
+     known — this is what lets height:100%/max-width:100% below correctly
+     pick whichever dimension actually binds, instead of one fixed
+     assumption. Until the first frame arrives this defaults to a
+     reasonable phone-ish ratio so the frame isn't a zero-size flash. */
+  aspect-ratio: 9 / 19.5;
+  height: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 11px;
+  border-radius: 30px;
+  background: var(--phone-bezel);
+  border: 1px solid var(--phone-bezel-border);
+  box-shadow: var(--shadow-phone);
+}
+
+#phone-frame.no-bezel {
+  padding: 0;
+  border-radius: 2px;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+#phone-frame-highlight {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), inset 0 1px 2px rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+}
+
+#phone-frame.no-bezel #phone-frame-highlight {
+  display: none;
+}
+
+#phone-camera {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #05070a;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+#phone-frame.no-bezel #phone-camera {
+  display: none;
+}
+
+#screen {
+  /* Frame is already sized to the real aspect ratio above, so the canvas
+     just fills it completely — no object-fit/auto-width math needed here. */
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 21px;
+  background: var(--phone-screen-bg);
+  cursor: crosshair;
+}
+
+#phone-frame.no-bezel #screen {
+  border-radius: 2px;
+}
+
+/* --- Rail (56px, variant B) --- */
+
+#mlv-rail {
+  flex: 0 0 56px;
+  width: 56px;
+  background: rgba(255, 255, 255, 0.025);
+  border-left: 1px solid var(--stroke-1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  gap: 6px;
+  transition: flex-basis var(--transition-fast), width var(--transition-fast);
+  overflow: hidden;
+}
+
+/* Same "thin clickable strip" pattern as the collapsed titlebar — see
+   titlebar.css. Closes the panel too (in app.js), since its toggle
+   buttons live inside the collapsed rail and would be unreachable. A
+   visible chevron (::after, not a real child) survives the opacity:0 rule
+   below that hides everything else — without it this was a blank strip
+   with no visible sign it does anything. */
+#mlv-rail.collapsed {
+  flex-basis: 10px;
+  width: 10px;
+  padding: 0;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+#mlv-rail.collapsed:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#mlv-rail.collapsed::after {
+  content: "◂";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 9px;
+  line-height: 1;
+  color: var(--text-quaternary);
+}
+
+#mlv-rail.collapsed:hover::after {
+  color: var(--text-tertiary);
+}
+
+#mlv-rail.collapsed > * {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#rail-collapse {
+  font-size: 10px;
+  color: var(--text-quaternary);
+}
+
+.rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.rail-bottom {
+  margin-top: auto;
+}
+
+.rail-divider {
+  width: 24px;
+  height: 1px;
+  background: var(--stroke-1);
+  margin: 6px 0;
+}
+
+.rail-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-row);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary-dim);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.rail-btn:hover {
+  background: var(--fill-hover-1);
+}
+
+.rail-btn.active {
+  background: var(--accent-tint-2);
+  color: #9adcff;
+}
+
+/* Android's own three-button nav, drawn to match Android exactly rather
+   than the host OS — order is Android's own: Back, Home, Recents. */
+
+.glyph-back {
+  width: 0;
+  height: 0;
+  border-top: 6.5px solid transparent;
+  border-bottom: 6.5px solid transparent;
+  border-right: 10px solid rgba(255, 255, 255, 0.86);
+}
+
+.glyph-home {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.7px solid rgba(255, 255, 255, 0.86);
+}
+
+.glyph-recents {
+  width: 12px;
+  height: 12px;
+  border-radius: 1.5px;
+  border: 1.7px solid rgba(255, 255, 255, 0.86);
+}
+
+/* --- Slide-out panel --- */
+
+#mlv-panel {
+  flex: 0 0 308px;
+  width: 308px;
+  background: var(--panel-surface);
+  border-left: 1px solid var(--stroke-1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+#mlv-panel[hidden] {
+  display: none;
+}
+
+#mlv-panel-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--stroke-1);
+}
+
+#mlv-panel-title {
+  font: 600 14px var(--font-text);
+  color: var(--text-primary);
+}
+
+#mlv-panel-close {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-control-lg);
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+#mlv-panel-close:hover {
+  background: var(--fill-hover-1);
+}
+
+#mlv-panel-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mlv-panel-link {
+  font: 400 12.5px var(--font-text);
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: 4px;
+}
+
+.mlv-panel-link:hover {
+  text-decoration: underline;
+}
+
+.mlv-panel-summary {
+  background: var(--accent-tint-1);
+  border: 1px solid var(--accent-tint-2);
+  border-radius: var(--radius-row);
+  padding: 11px 13px;
+  font: 400 12.5px/1.4 var(--font-text);
+  color: var(--text-secondary-dim);
+}
+
+/* Fullscreen: reclaim the browser chrome/taskbar for the biggest gain in
+   apparent picture size. The rail auto-hides to a slim edge strip so it
+   doesn't eat into that space, matching the design's variant-B rule.
+   Keyed to #mlv-rail specifically — must move if the rail is ever
+   restructured again, or fullscreen silently stops hiding it. */
+
+body:fullscreen #mlv-titlebar {
+  display: none;
+}
+
+body:fullscreen #mlv-rail {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.06;
+  transition: opacity var(--transition-fast);
+  background: rgba(23, 23, 23, 0.92);
+}
+
+body:fullscreen #mlv-rail:hover {
+  opacity: 1;
+}

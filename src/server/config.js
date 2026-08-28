@@ -28,6 +28,35 @@ const SCRCPY_VERSION = "4.1";
 const SCRCPY_SERVER_JAR = `scrcpy-server-v${SCRCPY_VERSION}.jar`;
 const SCRCPY_SERVER_JAR_URL = `https://github.com/Genymobile/scrcpy/releases/download/v${SCRCPY_VERSION}/scrcpy-server-v${SCRCPY_VERSION}`;
 
+const vendorDir = path.join(__dirname, "..", "..", "vendor");
+const QUALITY_SETTINGS_FILE = path.join(vendorDir, "quality-settings.json");
+
+// Quality settings (videoBitRate/maxFps/maxSize) can't be changed on a
+// running stream — scrcpy's control protocol has no "change encoder
+// settings" message, only ones that work within the config an encoder was
+// already spawned with (confirmed against the pinned protocol this app
+// implements, see scrcpy/constants.js). So a change here only takes effect
+// on the NEXT connect, not the current one, and needs to survive a
+// restart in the meantime — hence persisting to a file rather than just
+// mutating the in-memory object.
+function loadQualitySettings() {
+  try {
+    return JSON.parse(fs.readFileSync(QUALITY_SETTINGS_FILE, "utf8"));
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveQualitySettings({ videoBitRate, maxFps, maxSize }) {
+  fs.mkdirSync(vendorDir, { recursive: true });
+  fs.writeFileSync(
+    QUALITY_SETTINGS_FILE,
+    JSON.stringify({ videoBitRate, maxFps, maxSize }, null, 2)
+  );
+}
+
+const persistedQuality = loadQualitySettings();
+
 module.exports = {
   adbPath: process.env.ADB_PATH || "",
   // Deliberately empty by default. A second adb binary of a DIFFERENT
@@ -44,17 +73,26 @@ module.exports = {
   // resolution means these bits are spread over far fewer pixels, so this
   // is sharper per pixel than scrcpy's default despite being the same
   // number. Raise for more detail, lower if the stream lags.
-  videoBitRate: parseInt(process.env.VIDEO_BIT_RATE || "8000000", 10),
+  //
+  // Precedence: persisted vendor/quality-settings.json (set via the
+  // Settings UI) wins over .env, which wins over the hardcoded default.
+  // Numeric throughout (0/empty = uncapped) rather than the old
+  // string-or-empty style, since the Settings UI's sliders need real
+  // numbers — session.js's `if (config.maxFps)` truthy check still treats
+  // 0 the same as the old "".
+  videoBitRate: persistedQuality.videoBitRate ?? parseInt(process.env.VIDEO_BIT_RATE || "8000000", 10),
   // The phone happily encodes >100 fps, but a monitor renders at 60 and
   // every extra frame is bandwidth and decode work spent on something
   // nobody sees. Capping here roughly halves the data under heavy motion.
-  maxFps: process.env.MAX_FPS || "60",
+  maxFps: persistedQuality.maxFps ?? parseInt(process.env.MAX_FPS || "60", 10),
   // Longest-edge cap before encoding. A phone panel is far taller than any
   // monitor can show - streaming its full height means encoding and
   // decoding several times more pixels than are ever displayed, which
   // costs latency for no visible gain. 1600 still exceeds what fits on a
-  // 1080p screen. Set to "" to stream at full device resolution.
-  maxSize: process.env.MAX_SIZE || "1600",
+  // 1080p screen. Set to 0 to stream at full device resolution.
+  maxSize: persistedQuality.maxSize ?? parseInt(process.env.MAX_SIZE || "1600", 10),
+
+  saveQualitySettings,
 
   scrcpyForwardPort: parseInt(process.env.SCRCPY_FORWARD_PORT || "27183", 10),
   scrcpyControlPort: parseInt(process.env.SCRCPY_CONTROL_PORT || "27184", 10),
@@ -63,6 +101,6 @@ module.exports = {
   SCRCPY_VERSION,
   SCRCPY_SERVER_JAR,
   SCRCPY_SERVER_JAR_URL,
-  vendorDir: path.join(__dirname, "..", "..", "vendor"),
+  vendorDir,
   onDeviceServerPath: "/data/local/tmp/scrcpy-server.jar",
 };

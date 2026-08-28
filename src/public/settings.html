@@ -2,67 +2,195 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Mobile Live View — Settings</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Mobile Live View — Phones &amp; setup</title>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/titlebar.css" />
+  <link rel="stylesheet" href="css/devices.css" />
+  <link rel="stylesheet" href="css/quality.css" />
+  <link rel="stylesheet" href="css/pairing.css" />
+  <link rel="stylesheet" href="css/settings-page.css" />
 </head>
 <body class="settings-page">
-  <div class="settings-wrap">
-    <header class="settings-header">
-      <h1>Settings</h1>
-      <a class="back-link" href="index.html">&larr; Back to live view</a>
-    </header>
+  <!-- #mlv-titlebar is mounted here at runtime by titlebar.js -->
 
-    <section>
-      <div class="section-head">
-        <h2>Devices</h2>
-        <button id="refresh" class="secondary">Refresh</button>
-      </div>
-      <p id="current-status" class="muted">Loading...</p>
-      <ul id="device-list" class="device-list"></ul>
-    </section>
+  <div id="settings-scroll">
+    <div class="settings-content">
 
-    <section>
-      <h2>Connect over USB</h2>
-      <p class="muted">
-        The most reliable option, and immune to the Wi-Fi drop-outs that end a
-        wireless session. Plug the phone in, enable Developer options &rarr;
-        USB debugging, then accept the "Allow USB debugging?" prompt on the
-        phone. It appears in the list above as a USB device; press Refresh if
-        it does not show up straight away.
-      </p>
-    </section>
-
-    <section>
-      <h2>Pair with a QR code</h2>
-      <p class="muted">
-        Easiest option, nothing to type. On the phone: Settings &rarr; Developer
-        options &rarr; Wireless debugging &rarr; "Pair device with QR code",
-        then point it at the code below.
-      </p>
-      <div class="qr-area">
-        <button id="qr-start">Show pairing QR code</button>
-        <div id="qr-box" class="qr-box" hidden>
-          <img id="qr-img" alt="Pairing QR code" width="320" height="320" />
-          <p id="qr-status" class="muted"></p>
-          <button id="qr-cancel" class="secondary">Cancel</button>
+      <header class="settings-header">
+        <a class="back-btn" href="index.html" title="Back to live view">&#8592;</a>
+        <div>
+          <h1>Phones &amp; setup</h1>
+          <p class="settings-sub">Choose which phone appears in the live view, or add a new one.</p>
         </div>
-      </div>
-    </section>
+      </header>
 
-    <section>
-      <h2>Or pair with a code</h2>
-      <p class="muted">
-        On the phone: Settings &rarr; Developer options &rarr; Wireless debugging &rarr;
-        "Pair device with pairing code". Enter the address and code shown there.
-      </p>
-      <div class="pair-form">
-        <input id="pair-addr" type="text" placeholder="192.168.0.82:43971" />
-        <input id="pair-code" type="text" placeholder="123456" maxlength="6" />
-        <button id="pair-btn">Pair</button>
-      </div>
-      <p id="pair-result" class="muted"></p>
-    </section>
+      <section>
+        <div class="section-head">
+          <h2>Your phones</h2>
+          <button id="refresh" class="mlv-btn secondary" type="button">Refresh</button>
+        </div>
+        <ul id="device-list" class="device-list"></ul>
+      </section>
+
+      <section>
+        <h2>Add a phone</h2>
+        <p class="section-lede">Three ways in. A cable is the most reliable; the scannable code is the least typing.</p>
+
+        <div class="expander-list" id="method-list">
+
+          <div class="expander" data-method="usb">
+            <button class="expander-header" type="button">
+              <span class="expander-icon">&#8644;</span>
+              <span class="expander-title-col">
+                <span class="expander-title-row">
+                  <span class="expander-title">With a cable</span>
+                  <span class="expander-badge">Most reliable</span>
+                </span>
+                <span class="expander-sub">Unaffected by Wi-Fi problems. Needs one setting turned on, on the phone.</span>
+              </span>
+              <span class="expander-caret">&#9662;</span>
+            </button>
+            <div class="expander-body">
+              <ol class="step-list">
+                <li>
+                  <span class="step-num">1</span>
+                  <span class="step-text">Plug the phone into this computer.</span>
+                </li>
+                <li>
+                  <span class="step-num">2</span>
+                  <span class="step-text">
+                    On the phone, turn on USB debugging.
+                    <span class="breadcrumbs"><span>Settings</span><span>System</span><span>Developer options</span><span>USB debugging</span></span>
+                    <span class="step-note">Developer options is hidden until you tap Build number seven times under Settings › About phone.</span>
+                  </span>
+                </li>
+                <li>
+                  <span class="step-num">3</span>
+                  <span class="step-text">
+                    Tap Allow when the phone asks "Allow USB debugging?"
+                    <span class="step-note">Tick "Always allow from this computer" and you will not be asked again.</span>
+                  </span>
+                </li>
+                <li>
+                  <span class="step-num">4</span>
+                  <span class="step-text">The phone appears in the list above. Press Refresh if it does not show up straight away.</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="expander" data-method="qr">
+            <button class="expander-header" type="button">
+              <span class="expander-icon">&#9635;</span>
+              <span class="expander-title-col">
+                <span class="expander-title-row">
+                  <span class="expander-title">By scanning a code</span>
+                  <span class="expander-badge">Nothing to type</span>
+                </span>
+                <span class="expander-sub">Over Wi-Fi. Both the phone and this computer must be on the same network.</span>
+              </span>
+              <span class="expander-caret">&#9662;</span>
+            </button>
+            <div class="expander-body">
+              <ol class="step-list">
+                <li>
+                  <span class="step-num">1</span>
+                  <span class="step-text">
+                    On the phone, open Pair device with QR code.
+                    <span class="breadcrumbs"><span>Settings</span><span>System</span><span>Developer options</span><span>Wireless debugging</span><span>Pair device with QR code</span></span>
+                    <span class="step-note">The wording differs slightly between phones. Look for Wireless debugging.</span>
+                  </span>
+                </li>
+                <li>
+                  <span class="step-num">2</span>
+                  <span class="step-text">Press Show the code below, then point the phone's camera at it.</span>
+                </li>
+              </ol>
+
+              <div id="qr-idle">
+                <button id="qr-start" class="mlv-btn primary" type="button">Show the code</button>
+              </div>
+
+              <div id="qr-active" hidden>
+                <div class="qr-row">
+                  <div id="qr-plate">
+                    <img id="qr-img" alt="Pairing QR code" />
+                    <div id="qr-cover" class="qr-cover" hidden></div>
+                  </div>
+                  <div class="qr-text-col">
+                    <div class="qr-icon-row">
+                      <div id="qr-spinner" class="mlv-spinner"></div>
+                      <span id="qr-title"></span>
+                    </div>
+                    <p id="qr-body"></p>
+                    <div id="qr-buttons" class="qr-buttons"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="expander" data-method="code">
+            <button class="expander-header" type="button">
+              <span class="expander-icon">&#9000;</span>
+              <span class="expander-title-col">
+                <span class="expander-title-row">
+                  <span class="expander-title">By typing a code</span>
+                </span>
+                <span class="expander-sub">A fallback for networks where scanning does not work.</span>
+              </span>
+              <span class="expander-caret">&#9662;</span>
+            </button>
+            <div class="expander-body">
+              <ol class="step-list">
+                <li>
+                  <span class="step-num">1</span>
+                  <span class="step-text">
+                    On the phone, open Pair device with pairing code.
+                    <span class="breadcrumbs"><span>Settings</span><span>System</span><span>Developer options</span><span>Wireless debugging</span><span>Pair device with pairing code</span></span>
+                  </span>
+                </li>
+                <li>
+                  <span class="step-num">2</span>
+                  <span class="step-text">Type the address and the six-digit number the phone shows into the boxes below.</span>
+                </li>
+              </ol>
+
+              <div class="pair-form">
+                <div class="field-group" style="flex:1;min-width:200px">
+                  <label for="pair-addr">Address from the phone</label>
+                  <input id="pair-addr" type="text" placeholder="192.168.0.82:43971" />
+                </div>
+                <div class="field-group" style="width:130px">
+                  <label for="pair-code">Six-digit number</label>
+                  <input id="pair-code" type="text" placeholder="123456" maxlength="6" />
+                </div>
+                <button id="pair-btn" class="mlv-btn primary" type="button">Pair</button>
+              </div>
+              <p id="pair-result" class="pair-result"></p>
+              <p class="field-footnote">The number changes every time the phone shows this screen.</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section>
+        <h2>Picture &amp; speed</h2>
+        <p class="section-lede">A sharper picture runs further behind the phone. Pick what suits the connection you are on.</p>
+
+        <div class="mlv-quality-card">
+          <div id="preset-grid" class="mlv-preset-grid"></div>
+          <div id="quality-summary" class="mlv-panel-summary"></div>
+
+          <button id="advanced-toggle" class="mlv-advanced-toggle" type="button">Set the three settings myself</button>
+          <div id="sliders" class="mlv-sliders" hidden></div>
+        </div>
+      </section>
+
+    </div>
   </div>
+
   <script type="module" src="settings.js"></script>
 </body>
 </html>

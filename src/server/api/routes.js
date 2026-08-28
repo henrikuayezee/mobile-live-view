@@ -7,6 +7,7 @@ const adb = require("../adb/adb");
 const { BusyError } = require("../device-manager");
 const qrPairing = require("../qr-pairing");
 const ui = require("./ui");
+const config = require("../config");
 
 // Plain HTTP endpoints for driving the device from a script or from
 // Claude Code. The browser UI does not need these: it clicks the live
@@ -87,11 +88,14 @@ function buildApiRouter({ deviceManager, hub }) {
 
   // Serial goes in the body rather than the path: wireless serials are
   // long and punctuation-heavy, and this matches /pair's shape.
+  // `reconnect: true` only changes which status the client sees first
+  // ("Reconnecting to {model}" vs "Connecting to {model}") — the
+  // underlying connect work is identical either way.
   router.post("/devices/connect", async (req, res) => {
-    const { serial } = req.body || {};
+    const { serial, reconnect = false } = req.body || {};
     if (!serial) return res.status(400).json({ error: "serial required" });
     try {
-      res.json({ ok: true, ...(await deviceManager.connect(serial)) });
+      res.json({ ok: true, ...(await deviceManager.connect(serial, { reconnect })) });
     } catch (e) {
       handleError(res, e);
     }
@@ -134,6 +138,39 @@ function buildApiRouter({ deviceManager, hub }) {
   router.post("/pair/qr/cancel", (req, res) => {
     qrPairing.cancelSession();
     res.json({ ok: true });
+  });
+
+  // --- quality settings ---------------------------------------------------
+  // These can't be applied to an already-running stream: scrcpy's control
+  // protocol has no "change encoder settings" message, only ones that work
+  // within the config an encoder was already spawned with. A change here
+  // takes effect on the next connect, and is persisted so it survives a
+  // restart too — see config.js's saveQualitySettings.
+
+  router.get("/settings/quality", (req, res) => {
+    res.json({
+      videoBitRate: config.videoBitRate,
+      maxFps: config.maxFps,
+      maxSize: config.maxSize,
+    });
+  });
+
+  router.post("/settings/quality", (req, res) => {
+    const { videoBitRate, maxFps, maxSize } = req.body || {};
+    for (const [name, v] of Object.entries({ videoBitRate, maxFps, maxSize })) {
+      if (!Number.isFinite(v) || v < 0) {
+        return res.status(400).json({ error: `${name} must be a non-negative number` });
+      }
+    }
+    config.videoBitRate = videoBitRate;
+    config.maxFps = maxFps;
+    config.maxSize = maxSize;
+    try {
+      config.saveQualitySettings({ videoBitRate, maxFps, maxSize });
+    } catch (e) {
+      return res.status(500).json({ error: `Could not save settings: ${e.message}` });
+    }
+    res.json({ ok: true, videoBitRate, maxFps, maxSize });
   });
 
   // --- device interaction ------------------------------------------------

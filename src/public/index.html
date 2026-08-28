@@ -3,24 +3,63 @@
 <head>
   <meta charset="utf-8" />
   <title>Mobile Live View</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/titlebar.css" />
+  <link rel="stylesheet" href="css/overlay.css" />
+  <link rel="stylesheet" href="css/live-view.css" />
+  <link rel="stylesheet" href="css/devices.css" />
+  <link rel="stylesheet" href="css/quality.css" />
 </head>
 <body>
-  <div id="stage">
-    <canvas id="screen"></canvas>
+  <!-- #mlv-titlebar is mounted here at runtime by titlebar.js -->
+
+  <div id="mlv-body-row">
+    <div id="stage">
+      <div id="phone-frame">
+        <div id="phone-frame-highlight"></div>
+        <div id="phone-camera"></div>
+        <canvas id="screen"></canvas>
+      </div>
+      <!-- #mlv-overlay and #mlv-toast are mounted here at runtime -->
+    </div>
+
+    <div id="mlv-panel" hidden>
+      <div id="mlv-panel-header">
+        <span id="mlv-panel-title"></span>
+        <button id="mlv-panel-close" type="button" title="Close">&#10005;</button>
+      </div>
+      <div id="mlv-panel-body"></div>
+    </div>
+
+    <div id="mlv-rail">
+      <button id="rail-collapse" class="rail-btn" type="button" title="Hide sidebar">&#9656;</button>
+
+      <div class="rail-group">
+        <button id="nav-back" class="rail-btn" type="button" title="Back">
+          <span class="glyph-back"></span>
+        </button>
+        <button id="nav-home" class="rail-btn" type="button" title="Home">
+          <span class="glyph-home"></span>
+        </button>
+        <button id="nav-recents" class="rail-btn" type="button" title="Recent apps">
+          <span class="glyph-recents"></span>
+        </button>
+      </div>
+
+      <div class="rail-divider"></div>
+
+      <div class="rail-group">
+        <button id="toggle-devices" class="rail-btn" type="button" title="Phones">&#128241;</button>
+        <button id="toggle-quality" class="rail-btn" type="button" title="Picture &amp; speed">&#9881;</button>
+      </div>
+
+      <div class="rail-group rail-bottom">
+        <button id="fullscreen" class="rail-btn" type="button" title="Fullscreen (F)">&#9974;</button>
+        <a id="setup-link" class="rail-btn" href="settings.html" title="Setup">&#9776;</a>
+      </div>
+    </div>
   </div>
-  <aside id="rail">
-    <div id="status">Connecting...</div>
-    <div class="rail-controls">
-      <button id="nav-recents" title="Recent apps">&#9633;</button>
-      <button id="nav-home" title="Home">&#9679;</button>
-      <button id="nav-back" title="Back">&#9664;</button>
-    </div>
-    <div class="rail-controls">
-      <button id="fullscreen" title="Fullscreen (F)">&#9974;</button>
-      <a class="settings-link" href="settings.html" title="Settings">&#9881;</a>
-    </div>
-  </aside>
+
   <script type="module" src="app.js"></script>
 </body>
 </html>

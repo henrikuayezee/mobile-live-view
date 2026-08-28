@@ -40,7 +40,7 @@ class Hub {
     // new connection.
     this.lastConfigMsg = null;
     this.lastKeyFrameMsg = null;
-    this.lastStatus = { state: "idle", serial: null };
+    this.lastStatus = { state: "idle", serial: null, model: null, error: null };
 
     // WebSocketServer re-emits errors from the http server it's attached
     // to (e.g. EADDRINUSE). Without a listener here that copy is
@@ -50,7 +50,7 @@ class Hub {
       if (err.code !== "EADDRINUSE") console.error("WebSocket server error:", err.message);
     });
 
-    this.wss.on("connection", (ws) => {
+    this.wss.on("connection", (ws, req) => {
       this.clients.add(ws);
       // A client that has fallen behind is held here (not sent delta
       // frames) until the next keyframe, since resuming mid-GOP would
@@ -58,10 +58,24 @@ class Hub {
       // every frame after it — visible as smeared, doubled-looking video
       // that never self-heals until the rare next spontaneous keyframe.
       ws._resyncing = false;
+      // The settings page wants live connection status (for its titlebar
+      // chip) but never displays video — without this it would still be
+      // sent, and silently discard, the full H.264 bitstream for as long
+      // as the tab stays open. `?video=0` opts out of the broadcast loop
+      // below while still receiving every status/session message.
+      const query = new URL(req.url, "http://localhost").searchParams;
+      ws._wantsVideo = query.get("video") !== "0";
       ws.send(JSON.stringify({ type: "status", ...this.lastStatus }));
+      // "session" is tiny JSON (just the resolution) that a status-only
+      // client wants too — the titlebar's "{resolution} · USB/Wi-Fi" text
+      // needs it. Only the actual binary video replay is gated: that's
+      // real payload (a full keyframe, tens of KB) a status-only client
+      // asked not to receive.
       if (this.lastSessionInfo) ws.send(JSON.stringify({ type: "session", ...this.lastSessionInfo }));
-      if (this.lastConfigMsg) ws.send(this.lastConfigMsg);
-      if (this.lastKeyFrameMsg) ws.send(this.lastKeyFrameMsg);
+      if (ws._wantsVideo) {
+        if (this.lastConfigMsg) ws.send(this.lastConfigMsg);
+        if (this.lastKeyFrameMsg) ws.send(this.lastKeyFrameMsg);
+      }
       ws.on("close", () => this.clients.delete(ws));
       ws.on("message", (data, isBinary) => {
         if (isBinary || !this.onInput) return;
@@ -78,8 +92,8 @@ class Hub {
   // open across a switch keeps showing a frozen frame from the previous
   // device until new frames happen to arrive, and its VideoDecoder stays
   // configured for the old device's stream.
-  broadcastStatus({ state, serial = null, error = null }) {
-    this.lastStatus = { state, serial, error };
+  broadcastStatus({ state, serial = null, model = null, connectionType = null, error = null }) {
+    this.lastStatus = { state, serial, model, connectionType, error };
     const msg = JSON.stringify({ type: "status", ...this.lastStatus });
     for (const ws of this.clients) {
       if (ws.readyState === ws.OPEN) ws.send(msg);
@@ -110,7 +124,7 @@ class Hub {
     if (this.clients.size === 0) return;
 
     for (const ws of this.clients) {
-      if (ws.readyState !== ws.OPEN) continue;
+      if (ws.readyState !== ws.OPEN || !ws._wantsVideo) continue;
 
       if (ws._resyncing) {
         // A keyframe is a valid resume point on its own; a bare config

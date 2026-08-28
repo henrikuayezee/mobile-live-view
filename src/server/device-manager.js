@@ -50,13 +50,33 @@ class DeviceManager {
     }
   }
 
-  async connect(serial) {
+  // `reconnect: true` is purely which status string the first broadcast
+  // uses ("reconnecting" vs "attaching") — the design specifies distinct
+  // copy/steps for each, but the actual adb/session work underneath is
+  // identical either way, so this stays one method rather than a
+  // duplicate.
+  async connect(serial, { reconnect = false } = {}) {
     if (this._busy) throw new BusyError();
     this._busy = true;
     try {
+      // Resolved up front so even the very first broadcast (attaching /
+      // reconnecting) can show "{model}" — the design names the device
+      // from the start, not just once streaming begins.
+      const model = await this._resolveModel(serial);
+      // The titlebar's "{resolution} · USB/Wi-Fi" text needs this too —
+      // reuses the same classification locate-adb.js already does for
+      // device listing, rather than re-deriving it from the serial format
+      // a second time in the browser.
+      const connectionType = isWirelessSerial(serial) ? "wireless" : "usb";
+
       await this._teardown();
 
-      this.hub.broadcastStatus({ state: "connecting", serial });
+      this.hub.broadcastStatus({
+        state: reconnect ? "reconnecting" : "attaching",
+        serial,
+        model,
+        connectionType,
+      });
 
       // A device known only via mDNS isn't in `adb devices` yet — dial it
       // first so the forward/push below have a transport to use.
@@ -74,17 +94,45 @@ class DeviceManager {
       try {
         await session.start(serial);
       } catch (e) {
-        this.hub.broadcastStatus({ state: "error", serial, error: e.message });
+        // No state in the design's 7-state model fits a generic connect
+        // failure (their copy for e.g. "lost" is specifically about
+        // Android's own wireless-debugging timeout). Drop back to idle
+        // and let the client surface the message as a toast instead.
+        this.hub.broadcastStatus({ state: "idle", serial: null, error: e.message });
         throw e;
       }
 
       this._session = session;
-      this._wireSession(session);
-      this.hub.broadcastStatus({ state: "streaming", serial: session.serial });
+      this._wireSession(session, model, connectionType);
+      // Sockets are up but no picture exists yet — that's "starting", not
+      // "streaming". The real streaming broadcast happens once the video
+      // parser actually reports dimensions, in _wireSession below.
+      this.hub.broadcastStatus({ state: "starting", serial: session.serial, model, connectionType });
       this._saveLastDevice(session.serial);
       return { serial: session.serial, adbBinary: session.adbBinary };
     } finally {
       this._busy = false;
+    }
+  }
+
+  // Observed empty in practice specifically when reconnecting right after
+  // a drop — adb's own device-state settling (offline -> device) can still
+  // be mid-transition at the exact moment this queries it, so `adb devices
+  // -l`'s line for this serial can momentarily lack a model property. One
+  // short retry clears it in the cases actually seen; a genuinely unknown
+  // model (e.g. a serial that legitimately isn't listed) still degrades
+  // to the titlebar's plain "Device" fallback rather than retrying forever.
+  async _resolveModel(serial, { retried = false } = {}) {
+    try {
+      const devices = await this.listDevices();
+      const match = devices.find((d) => d.serial === serial);
+      if ((!match || !match.model) && !retried) {
+        await new Promise((r) => setTimeout(r, 400));
+        return this._resolveModel(serial, { retried: true });
+      }
+      return match ? match.model : null;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -115,10 +163,19 @@ class DeviceManager {
     }
   }
 
-  _wireSession(session) {
+  _wireSession(session, model, connectionType) {
     session.video.on("session", (info) => {
       console.log(`Resolution: ${info.width}x${info.height}`);
       this.hub.broadcastSessionInfo(info);
+      // Real dimensions existing is the actual definition of "a picture
+      // exists" — this is the true streaming moment, not session.start()
+      // resolving. Guarded the same way "close" below already is: a fast
+      // device switch can leave a stale "session" event in flight from a
+      // session that is no longer current, which would otherwise falsely
+      // announce streaming for a device that's already been replaced.
+      if (this._session === session) {
+        this.hub.broadcastStatus({ state: "streaming", serial: session.serial, model, connectionType });
+      }
     });
     session.video.on("frame", (packet) => this.hub.broadcastVideoPacket(packet));
     session.video.on("error", (err) => console.error("Video stream error:", err.message));
@@ -127,7 +184,7 @@ class DeviceManager {
         console.warn("Video socket closed — device disconnected?");
         this._session = null;
         this.hub.resetVideoCache();
-        this.hub.broadcastStatus({ state: "idle", serial: null });
+        this.hub.broadcastStatus({ state: "lost", serial: session.serial, model, connectionType });
       }
     });
   }

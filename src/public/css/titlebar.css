@@ -1,0 +1,178 @@
+/* Custom 44px title bar. Styled now with real Fluent chrome; the
+   minimize/maximize/close buttons render but do nothing until this is
+   packaged as a desktop app with a real window to control (a plain browser
+   tab cannot manage its own window chrome) — see #mlv-titlebar-controls. */
+
+#mlv-titlebar {
+  height: 44px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--stroke-1);
+  -webkit-app-region: drag;
+  transition: height var(--transition-fast);
+  overflow: hidden;
+}
+
+/* Collapsed to a thin strip rather than removed — always something to
+   click to bring it back. The strip itself is clickable (see titlebar.js).
+   A visible chevron (::after, not a real child) survives the opacity:0
+   rule below that hides everything else — without it the collapsed strip
+   was a blank bar with no visible sign it does anything. */
+#mlv-titlebar.collapsed {
+  height: 10px;
+  cursor: pointer;
+  border-bottom-color: transparent;
+  background: rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+#mlv-titlebar.collapsed:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#mlv-titlebar.collapsed::after {
+  content: "▾";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -55%);
+  font-size: 9px;
+  line-height: 1;
+  color: var(--text-quaternary);
+}
+
+#mlv-titlebar.collapsed:hover::after {
+  color: var(--text-tertiary);
+}
+
+#mlv-titlebar.collapsed > *:not(#mlv-titlebar-spacer) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#mlv-titlebar-mark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  flex: 0 0 auto;
+}
+
+#mlv-titlebar-mark .glyph {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#mlv-titlebar-mark .glyph::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.75;
+}
+
+#mlv-titlebar-mark .name {
+  font: 600 12.5px var(--font-text);
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+#mlv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px 4px 8px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--stroke-2);
+  -webkit-app-region: no-drag;
+}
+
+#mlv-chip .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--text-quaternary-dim);
+}
+
+#mlv-chip .dot.pulse {
+  animation: mlv-pulse 1.4s infinite;
+}
+
+#mlv-chip .label {
+  font: 400 12px var(--font-text);
+  color: var(--text-secondary-dim);
+  white-space: nowrap;
+}
+
+#mlv-titlebar-meta {
+  margin-left: 10px;
+  font: 400 11.5px var(--font-text);
+  color: rgba(255, 255, 255, 0.42);
+  white-space: nowrap;
+}
+
+#mlv-titlebar-spacer {
+  flex: 1;
+  -webkit-app-region: drag;
+}
+
+#mlv-titlebar-collapse {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+#mlv-titlebar-collapse:hover {
+  background: var(--fill-subtle-2);
+  color: var(--text-secondary-dim);
+}
+
+#mlv-titlebar-controls {
+  display: flex;
+  flex: 0 0 auto;
+  height: 44px;
+  -webkit-app-region: no-drag;
+}
+
+#mlv-titlebar-controls button {
+  width: 46px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--font-text);
+  font-size: 10px;
+  cursor: default; /* not yet wired to a real window — see file header */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#mlv-titlebar-controls button:hover {
+  background: var(--fill-subtle-2);
+}
+
+#mlv-titlebar-controls button.close:hover {
+  background: var(--close-hover);
+  color: #fff;
+}

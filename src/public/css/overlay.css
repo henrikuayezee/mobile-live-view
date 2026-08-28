@@ -1,0 +1,197 @@
+/* Full-stage connection-state overlay + toast. index.html (Live view) only —
+   settings.html has no phone stage to cover. */
+
+#mlv-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(18, 18, 18, 0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: mlv-rise var(--transition-med) ease-out;
+}
+
+#mlv-overlay[hidden] {
+  display: none;
+}
+
+#mlv-overlay-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card-surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-card);
+  padding: 26px 26px 22px;
+  box-shadow: var(--shadow-overlay);
+}
+
+#mlv-overlay-icon {
+  margin-bottom: 14px;
+}
+
+.mlv-spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(76, 194, 255, 0.25);
+  border-top-color: var(--accent);
+  animation: mlv-spin 0.9s linear infinite;
+}
+
+.mlv-glyph-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 13px var(--font-text);
+  color: var(--stage-bg);
+}
+
+.mlv-glyph-circle.warning {
+  background: var(--warning-dot);
+}
+
+.mlv-glyph-circle.error {
+  background: var(--danger);
+}
+
+#mlv-overlay-title {
+  font: 600 17px/1.25 var(--font-display);
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+#mlv-overlay-body {
+  font: 400 13.5px/1.5 var(--font-text);
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
+}
+
+#mlv-overlay-steps {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#mlv-overlay-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#mlv-overlay-steps .num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 10px var(--font-text);
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+#mlv-overlay-steps li.done .num {
+  background: var(--success-dot);
+  color: var(--stage-bg);
+}
+
+#mlv-overlay-steps li.current .num {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+#mlv-overlay-steps .step-label {
+  font: 400 12.5px var(--font-text);
+}
+
+#mlv-overlay-steps li.done .step-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#mlv-overlay-steps li:not(.done) .step-label {
+  color: var(--text-secondary-dim);
+}
+
+#mlv-overlay-note {
+  margin: 12px 0 0;
+  font: 400 11.5px/1.5 var(--font-text);
+  color: var(--text-quaternary);
+}
+
+#mlv-overlay-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+#mlv-overlay-buttons button {
+  padding: 8px 16px;
+  border-radius: var(--radius-control-lg);
+  font: 600 13px var(--font-text);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+#mlv-overlay-buttons button.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+#mlv-overlay-buttons button.primary:hover {
+  background: var(--accent-hover);
+}
+
+#mlv-overlay-buttons button.secondary {
+  background: var(--fill-subtle-2);
+  border-color: var(--stroke-2);
+  color: var(--text-secondary-dim);
+}
+
+#mlv-overlay-buttons button.secondary:hover {
+  background: var(--fill-hover-1);
+}
+
+/* --- Toast --- */
+
+#mlv-toast {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  max-width: 330px;
+  background: var(--card-surface);
+  border: 1px solid var(--stroke-2);
+  border-left: 3px solid var(--text-quaternary-dim);
+  border-radius: 7px;
+  padding: 13px 15px;
+  box-shadow: var(--shadow-toast);
+  animation: mlv-rise 0.18s ease-out;
+}
+
+#mlv-toast[hidden] {
+  display: none;
+}
+
+#mlv-toast.danger {
+  border-left-color: var(--danger);
+}
+
+#mlv-toast-title {
+  font: 600 13px var(--font-text);
+  color: var(--text-primary);
+  margin: 0 0 3px;
+}
+
+#mlv-toast-body {
+  font: 400 12.5px/1.4 var(--font-text);
+  color: var(--text-secondary-dim);
+  margin: 0;
+}

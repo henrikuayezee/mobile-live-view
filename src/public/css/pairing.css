@@ -1,0 +1,310 @@
+/* "Add a phone" — expander cards, breadcrumb chips, step lists, QR pairing
+   states, and the typed-code form. settings.html only. */
+
+/* --- Expander cards --- */
+
+.expander-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.expander {
+  background: var(--card-surface);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.expander-header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-text);
+}
+
+.expander-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.expander-icon {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-row);
+  background: rgba(76, 194, 255, 0.13);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.expander-title-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.expander-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.expander-title {
+  font: 600 14px var(--font-text);
+  color: var(--text-primary);
+}
+
+.expander-badge {
+  font: 600 10.5px var(--font-text);
+  color: var(--success-text);
+  background: var(--success-fill);
+  padding: 2px 7px;
+  border-radius: var(--radius-control);
+}
+
+.expander-sub {
+  font: 400 12.5px/1.4 var(--font-text);
+  color: var(--text-tertiary);
+}
+
+.expander-caret {
+  flex: 0 0 auto;
+  color: var(--text-quaternary);
+  font-size: 11px;
+  margin-top: 3px;
+  transition: transform var(--transition-fast);
+}
+
+.expander.open .expander-caret {
+  transform: rotate(180deg);
+}
+
+.expander-body {
+  display: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+  padding: 4px 18px 20px 62px;
+}
+
+.expander.open .expander-body {
+  display: block;
+}
+
+/* --- Step lists --- */
+
+.step-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.step-list li {
+  display: flex;
+  gap: 10px;
+}
+
+.step-num {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--text-secondary-dim);
+  font: 600 11px var(--font-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-text {
+  font: 400 13.5px/1.5 var(--font-text);
+  color: var(--text-secondary-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 1px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.breadcrumbs span {
+  padding: 3px 8px;
+  border-radius: var(--radius-control);
+  background: var(--fill-subtle-2);
+  border: 1px solid var(--stroke-2);
+  font: 400 11.5px var(--font-text);
+  color: var(--text-secondary-dim);
+}
+
+.breadcrumbs span + span::before {
+  content: "▸";
+  margin-right: 4px;
+  color: var(--text-quaternary-dim);
+}
+
+.step-note {
+  font: 400 12px/1.5 var(--font-text);
+  color: var(--text-quaternary);
+}
+
+/* --- QR pairing --- */
+
+#qr-idle {
+  margin-top: 16px;
+}
+
+#qr-active {
+  margin-top: 16px;
+}
+
+.qr-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+#qr-plate {
+  position: relative;
+  flex: 0 0 auto;
+  width: 180px;
+  height: 180px;
+  background: #fff;
+  border-radius: var(--radius-card);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+#qr-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.qr-cover {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 13px var(--font-text);
+  color: #1a1a1a;
+  text-align: center;
+  padding: 12px;
+}
+
+.qr-text-col {
+  flex: 1;
+  min-width: 200px;
+}
+
+.qr-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.qr-icon-row .mlv-spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+#qr-title {
+  font: 600 14px var(--font-text);
+}
+
+#qr-body {
+  font: 400 13px/1.5 var(--font-text);
+  color: var(--text-tertiary);
+  margin: 0 0 14px;
+}
+
+.qr-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* --- Typed-code form --- */
+
+.pair-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-top: 16px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field-group label {
+  font: 400 11.5px var(--font-text);
+  color: var(--text-tertiary);
+}
+
+.field-group input {
+  height: 34px;
+  border-radius: var(--radius-control-lg);
+  background: var(--fill-subtle-1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+  font: 400 13px var(--font-text);
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.field-group input:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+#pair-code {
+  letter-spacing: 2px;
+}
+
+.pair-result {
+  font: 400 12.5px/1.5 var(--font-text);
+  margin: 10px 0 0;
+  min-height: 1.5em;
+}
+
+.pair-result.error {
+  color: var(--danger);
+}
+
+.pair-result.success {
+  color: var(--success-text);
+}
+
+.field-footnote {
+  font: 400 11.5px var(--font-text);
+  color: var(--text-quaternary);
+  margin: 6px 0 0;
+}

@@ -102,6 +102,15 @@ export class ScrcpyDecoder {
     if (this.canvas.width !== frame.displayWidth || this.canvas.height !== frame.displayHeight) {
       this.canvas.width = frame.displayWidth;
       this.canvas.height = frame.displayHeight;
+      // The phone-frame wrapper (see index.html/live-view.css) sizes
+      // itself from this — CSS aspect-ratio lets the browser pick
+      // whichever of height:100%/max-width:100% actually binds, correctly
+      // handling both a tall narrow window (height-bound) and a short
+      // wide one (width-bound) without extra layout math here. Reaches up
+      // to the immediate parent rather than a hardcoded id, since decoder.js
+      // shouldn't otherwise know about page structure.
+      const frameEl = this.canvas.parentElement;
+      if (frameEl) frameEl.style.aspectRatio = `${frame.displayWidth} / ${frame.displayHeight}`;
     }
     this.ctx.drawImage(frame, 0, 0);
     frame.close();
