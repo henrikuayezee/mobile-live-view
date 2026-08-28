@@ -28,7 +28,13 @@ const SCRCPY_VERSION = "4.1";
 const SCRCPY_SERVER_JAR = `scrcpy-server-v${SCRCPY_VERSION}.jar`;
 const SCRCPY_SERVER_JAR_URL = `https://github.com/Genymobile/scrcpy/releases/download/v${SCRCPY_VERSION}/scrcpy-server-v${SCRCPY_VERSION}`;
 
-const vendorDir = path.join(__dirname, "..", "..", "vendor");
+// Overridden by electron/main.js in the packaged app, which points this at
+// a writable per-user directory (Electron's userData) instead of the
+// install directory — vendor/last-device.json and vendor/quality-settings.json
+// are written at runtime, and an installed app's own directory may not be
+// writable. Falls back to the source-relative path for plain `node
+// src/server/index.js` / `npm start`, unchanged from before.
+const vendorDir = process.env.MLV_VENDOR_DIR || path.join(__dirname, "..", "..", "vendor");
 const QUALITY_SETTINGS_FILE = path.join(vendorDir, "quality-settings.json");
 
 // Quality settings (videoBitRate/maxFps/maxSize) can't be changed on a
@@ -66,6 +72,9 @@ module.exports = {
   // destroy a working session, so a fallback is only used when
   // explicitly configured via ADB_FALLBACK_PATH.
   adbFallbackPath: process.env.ADB_FALLBACK_PATH || "",
+  // Set by electron/main.js in the packaged app to its bundled adb.exe —
+  // see locate-adb.js's candidatePaths(). Empty for plain `npm start`.
+  bundledAdbPath: process.env.MLV_BUNDLED_ADB_PATH || "",
   deviceSerial: process.env.DEVICE_SERIAL || "",
   wirelessAdbAddr: process.env.WIRELESS_ADB_ADDR || "",
 

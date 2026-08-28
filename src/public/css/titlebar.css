@@ -1,7 +1,8 @@
-/* Custom 44px title bar. Styled now with real Fluent chrome; the
-   minimize/maximize/close buttons render but do nothing until this is
-   packaged as a desktop app with a real window to control (a plain browser
-   tab cannot manage its own window chrome) — see #mlv-titlebar-controls. */
+/* Custom 44px title bar. The minimize/maximize/close buttons are wired to
+   the real OS window via electron/preload.js (see titlebar.js) — in a
+   plain browser tab (dev workflow) window.mlvWindow is simply absent and
+   they do nothing, since a tab has no window chrome of its own to
+   control. See #mlv-titlebar-controls. */
 
 #mlv-titlebar {
   height: 44px;
@@ -47,9 +48,18 @@
   color: var(--text-tertiary);
 }
 
+/* display:none, not just opacity:0 — a hidden-but-still-laid-out child
+   (in particular #mlv-titlebar-controls, which explicitly declares
+   -webkit-app-region:no-drag for its buttons) still carves that no-drag
+   region out of the collapsed strip even while invisible, since app-region
+   is a layout-time concept unrelated to opacity/pointer-events. That left
+   little or no actual drag area once collapsed — a real bug (dragging the
+   window stopped working whenever the title bar was collapsed, most
+   noticeably in compact view, where the strip is nearly the whole window).
+   Fully removing the children from layout means only the bar's own
+   drag region remains, so the entire collapsed strip is draggable. */
 #mlv-titlebar.collapsed > *:not(#mlv-titlebar-spacer) {
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 }
 
 #mlv-titlebar-mark {
@@ -162,7 +172,7 @@
   color: rgba(255, 255, 255, 0.75);
   font-family: var(--font-text);
   font-size: 10px;
-  cursor: default; /* not yet wired to a real window — see file header */
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;

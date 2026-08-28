@@ -112,6 +112,10 @@ function openBrowser(url) {
   server.listen(config.webPort, async () => {
     console.log(`Mobile Live View running at ${url}`);
     if (AUTO_OPEN) openBrowser(url);
+    // No-op under plain `node src/server/index.js` (process.send only
+    // exists when forked) — lets electron/main.js know when to create its
+    // window instead of polling the port or scraping stdout.
+    if (process.send) process.send({ type: "listening", port: config.webPort });
 
     const result = await deviceManager.autoReconnect();
     if (!result) console.log("No device connected. Open Settings to pick one.");

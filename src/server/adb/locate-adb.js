@@ -9,6 +9,11 @@ function candidatePaths() {
   if (config.adbPath) candidates.push(config.adbPath);
   candidates.push("adb"); // relies on PATH
   if (config.adbFallbackPath) candidates.push(config.adbFallbackPath);
+  // The packaged app's own bundled copy (see electron/main.js), tried only
+  // after every candidate the user might have configured themselves — a
+  // zero-setup fallback for a machine with no adb installed at all, not a
+  // replacement for a working custom setup.
+  if (config.bundledAdbPath) candidates.push(config.bundledAdbPath);
   return candidates;
 }
 

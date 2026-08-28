@@ -9,11 +9,20 @@ node_modules/
 # rather than vendored so the repo stays source-only.
 vendor/*.jar
 
+# Downloaded at setup time by `npm run fetch-adb` — Google's official
+# platform-tools adb.exe + its two Windows companion DLLs, bundled into
+# the installer so it works with no adb pre-installed. Same reason it
+# isn't vendored: fetched fresh rather than committed.
+vendor/platform-tools/
+
 # Remembers the last connected device serial
 vendor/last-device.json
 
 # Remembers the user's chosen picture-quality settings
 vendor/quality-settings.json
+
+# electron-builder output (installer .exe, unpacked app, blockmap)
+dist/
 
 # Scratch/debug output
 *.log

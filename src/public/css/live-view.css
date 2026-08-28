@@ -154,9 +154,13 @@
   color: var(--text-tertiary);
 }
 
+/* display:none, not opacity — see titlebar.css's collapsed rule for why:
+   a hidden-but-still-laid-out child can still interfere with the parent
+   (there it broke window dragging; here it's not drag-relevant, but the
+   same fully-remove-from-layout approach is the more robust fix either
+   way, and keeps the two collapse behaviors consistent). */
 #mlv-rail.collapsed > * {
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 }
 
 #rail-collapse {

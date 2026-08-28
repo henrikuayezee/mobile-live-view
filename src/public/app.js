@@ -390,3 +390,52 @@ async function renderQualityTab() {
 toggleDevicesBtn.onclick = () => openPanel("devices");
 toggleQualityBtn.onclick = () => openPanel("quality");
 document.getElementById("mlv-panel-close").onclick = closePanel;
+
+// --- Compact view -----------------------------------------------------------
+// Collapses the title bar + rail to their thin strips and, inside the
+// packaged Electron app, also shrinks the real OS window to exactly the
+// phone's own pixel size — see electron/main.js's mlv:enter-compact/
+// exit-compact. CSS alone only gets half of "no black gutter around the
+// phone": the window itself has to actually get smaller too, which only
+// the app (not a browser tab) can do to itself. In a plain browser tab
+// this still collapses the chrome, it just can't resize the tab.
+
+let compactMode = false;
+const compactBtn = document.getElementById("compact-view");
+
+function setCompactMode(on) {
+  if (on === compactMode) return;
+  if (on && !lastResolution) {
+    showToast("Nothing to snap to", "Connect a phone first — there's no picture yet to size the window around.");
+    return;
+  }
+  compactMode = on;
+  compactBtn.classList.toggle("active", on);
+  titlebar.setCollapsed(on);
+  setRailCollapsed(on);
+  if (on) window.mlvWindow?.enterCompact(lastResolution.width, lastResolution.height);
+  else window.mlvWindow?.exitCompact();
+}
+
+compactBtn.addEventListener("click", (e) => {
+  // Without this, the click bubbles up to rail's own "expand if
+  // collapsed" listener below — which just collapsed the rail as a side
+  // effect of turning compact mode ON, and would immediately re-expand
+  // it again on the very same click.
+  e.stopPropagation();
+  setCompactMode(!compactMode);
+});
+
+// Manually reopening either strip while compact should also restore the
+// window, not just the chrome — otherwise the rail/title bar pop back to
+// full size inside a window that's still shrunk to fit only the phone,
+// squeezing everything. Both listeners fire after the existing
+// "collapsed strip click expands it" listeners above/in titlebar.js
+// (same element, registered earlier), so by the time these run, the
+// collapse state already reflects the just-completed expand.
+rail.addEventListener("click", () => {
+  if (compactMode && !rail.classList.contains("collapsed")) setCompactMode(false);
+});
+titlebar.element.addEventListener("click", () => {
+  if (compactMode && !titlebar.isCollapsed()) setCompactMode(false);
+});

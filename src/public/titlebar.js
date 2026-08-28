@@ -95,14 +95,37 @@ export function createTitlebar() {
     // Same as above — default to expanded.
   }
 
-  // Not yet wired to a real OS window — see css/titlebar.css's file header.
-  // Packaging (Electron or similar) is what gives these buttons something
-  // real to control.
-  for (const btn of el.querySelectorAll("#mlv-titlebar-controls button")) {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      console.log(`Window control "${btn.className}" clicked — not wired until this is packaged.`);
-    });
+  // window.mlvWindow is exposed by electron/preload.js — absent when this
+  // page is opened as a plain browser tab (dev workflow), in which case
+  // these just do nothing rather than error, since a browser tab has no
+  // window chrome of its own to control.
+  const minBtn = el.querySelector("#mlv-titlebar-controls .min");
+  const maxBtn = el.querySelector("#mlv-titlebar-controls .max");
+  const closeBtn = el.querySelector("#mlv-titlebar-controls .close");
+
+  function setMaximizedGlyph(isMaximized) {
+    maxBtn.textContent = isMaximized ? "❐" : "□";
+    maxBtn.title = isMaximized ? "Restore" : "Maximize";
+  }
+
+  minBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    window.mlvWindow?.minimize();
+  });
+  maxBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    if (!window.mlvWindow) return;
+    if (await window.mlvWindow.isMaximized()) window.mlvWindow.unmaximize();
+    else window.mlvWindow.maximize();
+  });
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    window.mlvWindow?.close();
+  });
+
+  if (window.mlvWindow) {
+    window.mlvWindow.isMaximized().then(setMaximizedGlyph);
+    window.mlvWindow.onMaximizedChange(setMaximizedGlyph);
   }
 
   render();
@@ -117,6 +140,11 @@ export function createTitlebar() {
       lastSession = session;
       render();
     },
+    // Lets app.js drive the collapse externally (e.g. the "compact view"
+    // rail button), reusing the exact same collapse the built-in chevron
+    // button already does.
+    setCollapsed,
+    isCollapsed: () => el.classList.contains("collapsed"),
   };
 }
 

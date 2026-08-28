@@ -4,17 +4,59 @@
   "private": true,
   "description": "Local browser-based live view and remote control for a connected Android device, using scrcpy-server over adb.",
   "type": "commonjs",
-  "main": "src/server/index.js",
+  "main": "electron/main.js",
   "scripts": {
     "check-adb": "node scripts/check-adb.js",
     "pair-wireless": "node scripts/pair-wireless.js",
     "fetch-scrcpy-server": "node scripts/fetch-scrcpy-server.js",
+    "fetch-adb": "node scripts/fetch-adb.js",
     "phase1": "node scripts/phase1-raw-bytes.js",
-    "start": "node src/server/index.js"
+    "start": "node src/server/index.js",
+    "electron": "electron .",
+    "predist": "npm run fetch-scrcpy-server && npm run fetch-adb",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "express": "^4.19.2",
     "qrcode": "^1.5.4",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^32.3.3",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "dev.henryquayezee.mobileliveview",
+    "productName": "Mobile Live View",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "electron/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor",
+        "to": "vendor",
+        "filter": [
+          "*.jar",
+          "platform-tools/**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "allowScripts": {
+    "electron@32.3.3": true
   }
 }
