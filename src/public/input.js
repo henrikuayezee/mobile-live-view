@@ -56,6 +56,36 @@ export function attachPointerInput(canvas, sendInput) {
     sendInput({ type: "touch", action: "up", ...pos });
   });
 
+  // Mouse wheel / trackpad scroll -> a real Android AXIS_VSCROLL/HSCROLL
+  // scroll event (see control-protocol.js's injectScrollEvent), not a
+  // faked touch-drag swipe - matches how scrcpy's own desktop client
+  // forwards wheel input, and behaves correctly in views that treat
+  // touch-drag and scroll-wheel input differently.
+  canvas.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      // Chromium (the only engine this app targets, per the WebCodecs
+      // requirement) always reports deltaMode 0 (pixels) in practice, so
+      // line/page delta modes aren't handled here.
+      //
+      // ~100px is roughly what Chrome reports for one physical wheel
+      // notch, and one notch is the "one click" scrcpy's own protocol is
+      // scaled around (control_msg.c treats a click count of 16 as full
+      // deflection) - chosen to match that feel, not arbitrary.
+      const TICKS_PER_PIXEL = 1 / 100;
+      // DOM's deltaY/deltaX are the opposite sign of Android's
+      // AXIS_VSCROLL/AXIS_HSCROLL - see injectScrollEvent's comment.
+      sendInput({
+        type: "scroll",
+        ...toDeviceCoords(e),
+        hscroll: -e.deltaX * TICKS_PER_PIXEL,
+        vscroll: -e.deltaY * TICKS_PER_PIXEL,
+      });
+    },
+    { passive: false }
+  );
+
   // Canvas has no native meaning for a touch drag; prevent the browser's
   // own scroll/gesture handling from fighting our pointer capture.
   canvas.style.touchAction = "none";

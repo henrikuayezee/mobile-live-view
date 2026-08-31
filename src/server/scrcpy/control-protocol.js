@@ -82,6 +82,51 @@ function touchUp(pos) {
   return injectTouchEvent({ action: MOTIONEVENT_ACTION.UP, ...pos });
 }
 
+// 21 bytes: type(1) x(4 BE) y(4 BE) screenWidth(2 BE) screenHeight(2 BE)
+// hscroll(2 BE signed fixed-point) vscroll(2 BE signed fixed-point) buttons(4 BE)
+//
+// hscroll/vscroll here follow control_msg.c's own contract exactly: raw
+// values in roughly [-16, 16] (scrcpy's desktop client passes SDL's mouse
+// wheel "click count" straight through, unscaled), normalized to [-1, 1]
+// and converted to fixed-point below - not pre-normalized by the caller,
+// so this stays a faithful byte-for-byte port rather than an invented
+// contract. input.js's job is only "how many wheel-clicks-worth does
+// this many browser pixels feel like", which has no canonical answer to
+// look up in scrcpy's source (it never sees continuous trackpad deltas,
+// only discrete OS wheel-click events).
+//
+// Sign convention: Android's AXIS_VSCROLL/AXIS_HSCROLL follow SDL's
+// mouse-wheel convention (positive = up / away from the user), which is
+// the OPPOSITE of DOM WheelEvent's deltaY/deltaX (positive = content
+// moves up, i.e. scrolling down toward the user) - confirmed by reading
+// scrcpy's own input_manager.c, which forwards SDL's event->y into
+// vscroll with no sign flip. input.js negates both axes to correct for
+// this before calling here.
+function injectScrollEvent({ x, y, screenWidth, screenHeight, hscroll = 0, vscroll = 0, buttons = 0 }) {
+  const buf = Buffer.alloc(21);
+  buf.writeUInt8(CONTROL_MSG_TYPE.INJECT_SCROLL_EVENT, 0);
+  buf.writeUInt32BE(x, 1);
+  buf.writeUInt32BE(y, 5);
+  buf.writeUInt16BE(screenWidth, 9);
+  buf.writeUInt16BE(screenHeight, 11);
+  buf.writeInt16BE(floatToI16Fp(clamp(hscroll / 16, -1, 1)), 13);
+  buf.writeInt16BE(floatToI16Fp(clamp(vscroll / 16, -1, 1)), 15);
+  buf.writeUInt32BE(buttons, 17);
+  return buf;
+}
+
+// util/binary.h sc_float_to_i16fp: f in [-1,1] -> round(f * 2^15), clamped.
+function floatToI16Fp(f) {
+  const i = Math.round(f * 0x8000);
+  if (i >= 0x7fff) return 0x7fff;
+  if (i <= -0x8000) return -0x8000;
+  return i;
+}
+
+function clamp(v, lo, hi) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
 // 1 byte: just the type. Forces a fresh config+keyframe pair - the only
 // SAFE way to recover a client that has fallen behind. Dropping frames
 // arbitrarily is not safe: P-frames decode relative to the frame before
@@ -106,5 +151,6 @@ module.exports = {
   touchDown,
   touchMove,
   touchUp,
+  injectScrollEvent,
   resetVideo,
 };

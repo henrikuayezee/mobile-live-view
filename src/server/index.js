@@ -70,6 +70,18 @@ function openBrowser(url) {
     } else if (msg.type === "key" && Number.isFinite(msg.keycode)) {
       session.writeControl(control.keyDown(msg.keycode));
       session.writeControl(control.keyUp(msg.keycode));
+    } else if (msg.type === "scroll") {
+      if (!hub.lastSessionInfo) return;
+      session.writeControl(
+        control.injectScrollEvent({
+          x: msg.x,
+          y: msg.y,
+          screenWidth: hub.lastSessionInfo.width,
+          screenHeight: hub.lastSessionInfo.height,
+          hscroll: msg.hscroll,
+          vscroll: msg.vscroll,
+        })
+      );
     }
   };
 
