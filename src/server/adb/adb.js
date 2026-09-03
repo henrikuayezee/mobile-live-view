@@ -41,8 +41,18 @@ function parseDevicesOutput(stdout) {
 }
 
 async function devices(adbBinary) {
-  const { stdout, err } = await run(adbBinary, ["devices", "-l"]);
-  if (err) return [];
+  const { stdout, stderr, err } = await run(adbBinary, ["devices", "-l"]);
+  // A working binary exits 0 here even with zero devices attached — `err`
+  // only fires when the exec itself failed (e.g. ENOENT, a missing DLL
+  // dependency, a timeout). Every caller of this function (resolveAdbBinary,
+  // listDevices) is already written to catch that and treat it as "this
+  // candidate doesn't work", so swallowing it into [] here made a binary
+  // that can't even spawn indistinguishable from one that ran fine and
+  // legitimately found nothing — resolveAdbBinary would then hand back a
+  // dead binary as "working", and qr-pairing's poll loop had no failure to
+  // turn into a status message, so a broken adb looked like "still waiting"
+  // forever with no diagnostic anywhere.
+  if (err) throw new Error(`adb devices failed: ${stderr || err.message}`);
   return parseDevicesOutput(stdout);
 }
 
@@ -52,8 +62,13 @@ async function devices(adbBinary) {
 // "pick any of my phones" UI possible. Output lines look like:
 //   adb-R5CT21KPWMZ-7PM6f1  _adb-tls-connect._tcp  192.168.0.82:43399
 async function mdnsServices(adbBinary) {
-  const { stdout, err } = await run(adbBinary, ["mdns", "services"]);
-  if (err) return [];
+  const { stdout, stderr, err } = await run(adbBinary, ["mdns", "services"]);
+  // Throws rather than swallowing to []; see the matching comment on
+  // devices() above. Both callers (qr-pairing.js's poll loop and
+  // listDevices() below) already catch this — mDNS discovery is
+  // best-effort there, but the exec itself failing to run is a real
+  // failure, not "found nothing".
+  if (err) throw new Error(`adb mdns services failed: ${stderr || err.message}`);
   const services = [];
   for (const line of stdout.split(/\r?\n/).slice(1)) {
     const parts = line.trim().split(/\s+/);
