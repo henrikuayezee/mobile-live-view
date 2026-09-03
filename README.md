@@ -6,9 +6,13 @@ and sends taps, swipes, typing, and hardware keys back to it.
 
 ## Running it
 
-Double-click **`launch.bat`**. It installs dependencies and downloads the
-scrcpy server component on first run, then starts the server and opens your
-browser automatically.
+Two ways to run the exact same app — same server, same UI code, just a
+different shell around it. There's no separate "browser version" to keep in
+sync; picking one doesn't require anything from the other.
+
+**In a browser** — double-click **`launch.bat`**. It installs dependencies
+and downloads the scrcpy server component on first run, then starts the
+server and opens your browser automatically.
 
 The server runs in a minimized window titled "Mobile Live View Server" —
 **close that window to stop it**. If it ever fails to start, that window
@@ -18,6 +22,19 @@ stays open with the error visible instead of closing instantly.
 
 Running it a second time won't start a duplicate; it just opens the browser
 onto the instance that's already running.
+
+On a machine that will only ever use the browser route, skip installing
+Electron's devDependencies (a 100MB+ download it doesn't need) by running
+`npm install --omit=dev` instead of a plain `npm install` before the first
+`launch.bat` run — everything above behaves identically either way.
+
+**As a native Windows app** — `npm install` (full install, no `--omit=dev`),
+then `npm run electron` to run it unpackaged, or `npm run dist` to build an
+installable `.exe` (adds a real title bar with working window controls, and
+a "compact view" button that snaps the window to the phone with no black
+gutter around it — neither makes sense in a browser tab, which is why
+they're Electron-only). See `electron/main.js` for how it forks the same
+server this file describes.
 
 ## Connecting a phone
 
@@ -98,4 +115,9 @@ Optional — copy `.env.example` to `.env` to override defaults:
 ## Requirements
 
 Node.js (from nodejs.org) and a Chromium-based browser (Chrome or Edge) for
-WebCodecs support.
+WebCodecs support. adb needs to be reachable somehow (`ADB_PATH` below,
+or already on `PATH`) for the browser route.
+
+The Windows app doesn't need any of that pre-installed — it bundles its own
+adb and the scrcpy server inside the installer, so a clean machine with no
+Node, no Android SDK, and no adb works out of the box.
