@@ -44,7 +44,16 @@ class QrPairingSession {
   async qrDataUrl() {
     return QRCode.toDataURL(this.qrPayload(), {
       errorCorrectionLevel: "M",
-      margin: 2,
+      // Transparent background: the plate behind the <img> paints the light
+      // field (--qr-paper in public/css/pairing.css), so the paper colour is
+      // defined in exactly one place and the PNG can never show a seam
+      // against it. The modules stay near-black on purpose — scanners,
+      // Android's pairing scanner included, only read dark-on-light, so this
+      // code cannot be inverted to suit the dark theme.
+      color: { dark: "#101114ff", light: "#00000000" },
+      // Only one module of quiet zone is baked in; the plate's padding
+      // supplies the rest of the four the spec asks for.
+      margin: 1,
       width: 320,
     });
   }
