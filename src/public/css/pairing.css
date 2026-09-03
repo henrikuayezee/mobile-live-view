@@ -261,6 +261,18 @@
   margin: 0 0 14px;
 }
 
+/* Live status from the backend's discovery/pairing loop — e.g. "Discovery
+   error, retrying... (spawn adb ENOENT)". Without this the "waiting" state
+   looked identical whether adb was silently failing on every poll or
+   genuinely still looking, which read as "scan the code and nothing
+   happens" with no way to tell why. Deliberately no `display` here so the
+   plain [hidden] attribute still works, unlike .qr-cover below. */
+.qr-status {
+  font: 400 12px var(--font-text);
+  color: var(--text-quaternary);
+  margin: -8px 0 14px;
+}
+
 .qr-buttons {
   display: flex;
   gap: 10px;

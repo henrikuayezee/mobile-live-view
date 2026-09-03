@@ -174,6 +174,7 @@ const qrCover = document.getElementById("qr-cover");
 const qrSpinner = document.getElementById("qr-spinner");
 const qrTitle = document.getElementById("qr-title");
 const qrBody = document.getElementById("qr-body");
+const qrStatus = document.getElementById("qr-status");
 const qrButtons = document.getElementById("qr-buttons");
 let qrPollTimer = null;
 
@@ -193,6 +194,7 @@ function renderQrState(s) {
   const state = s.state === "timeout" ? "expired" : s.state; // see comment above
   qrCover.hidden = state === "waiting";
   qrSpinner.hidden = state !== "waiting";
+  qrStatus.hidden = state !== "waiting";
   qrButtons.innerHTML = "";
 
   function addButton(label, kind, onClick) {
@@ -209,6 +211,11 @@ function renderQrState(s) {
     qrTitle.textContent = "Waiting for the phone to scan";
     qrTitle.style.color = "#fff";
     qrBody.textContent = `Point the phone's camera at the code. This can take a couple of minutes if you are walking over to it — the code stays valid for that long. Waiting ${formatCountdown(s.expiresInMs)}.`;
+    // The backend's own per-poll status — e.g. "Discovery error, retrying...
+    // (spawn adb ENOENT)" — was previously discarded here, so a broken adb
+    // install looked identical to "still looking": scan the code and
+    // nothing ever happens, with no clue why.
+    qrStatus.textContent = s.message || "";
     addButton("Cancel", "secondary", cancelQr);
   } else if (state === "paired") {
     qrCover.textContent = "Paired ✓";
