@@ -225,6 +225,14 @@
   padding: 12px;
 }
 
+/* A plain author `display` declaration beats the UA [hidden] rule
+   regardless of specificity, so without this the cover never actually
+   hides when JS sets qrCover.hidden = true — it just sits there
+   translucent, showing whatever text the last state left behind. */
+.qr-cover[hidden] {
+  display: none;
+}
+
 .qr-text-col {
   flex: 1;
   min-width: 200px;

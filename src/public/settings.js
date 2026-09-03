@@ -205,6 +205,7 @@ function renderQrState(s) {
   }
 
   if (state === "waiting") {
+    qrCover.textContent = "";
     qrTitle.textContent = "Waiting for the phone to scan";
     qrTitle.style.color = "#fff";
     qrBody.textContent = `Point the phone's camera at the code. This can take a couple of minutes if you are walking over to it — the code stays valid for that long. Waiting ${formatCountdown(s.expiresInMs)}.`;
