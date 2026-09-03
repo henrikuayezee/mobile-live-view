@@ -102,8 +102,10 @@ curl -X POST http://localhost:8000/api/tap \
 Optional — copy `.env.example` to `.env` to override defaults:
 
 - `ADB_PATH` / `ADB_FALLBACK_PATH` — which adb binary to use. The app probes
-  candidates and picks one that can actually see a device, so this is usually
-  unnecessary.
+  candidates and picks one that can actually see a device, falling all the
+  way back to the copy `npm install` fetched into `vendor/` automatically —
+  so this is only needed to point at a *specific* adb (e.g. one tied to a
+  particular USB driver), not just to get one working at all.
 - `WEB_PORT` — defaults to 8000.
 - `DEVICE_SERIAL` — pin to one device instead of remembering the last used.
 - `VIDEO_BIT_RATE` — encoder bitrate, default 16000000 (16 Mbps). scrcpy's own
@@ -115,9 +117,18 @@ Optional — copy `.env.example` to `.env` to override defaults:
 ## Requirements
 
 Node.js (from nodejs.org) and a Chromium-based browser (Chrome or Edge) for
-WebCodecs support. adb needs to be reachable somehow (`ADB_PATH` below,
-or already on `PATH`) for the browser route.
+WebCodecs support.
 
-The Windows app doesn't need any of that pre-installed — it bundles its own
-adb and the scrcpy server inside the installer, so a clean machine with no
-Node, no Android SDK, and no adb works out of the box.
+adb does NOT need to be pre-installed for the browser route either: `npm
+install`'s postinstall step fetches a copy of adb and the scrcpy server into
+`vendor/` automatically, and the app finds it there with no `ADB_PATH` or
+`.env` needed (see Configuration above). This repeats on every fresh clone —
+moving to another computer just means `git clone` + `npm install` again, not
+a manual adb install. If that fetch fails (offline install, flaky network),
+it's a warning, not a failed install — run `npm run fetch-adb` and `npm run
+fetch-scrcpy-server` by hand once you're online, or set `ADB_PATH` to an adb
+you already have.
+
+The Windows app doesn't need any of that either — it bundles its own adb and
+the scrcpy server inside the installer, so a clean machine with no Node, no
+Android SDK, and no adb works out of the box.

@@ -75,6 +75,12 @@ module.exports = {
   // Set by electron/main.js in the packaged app to its bundled adb.exe —
   // see locate-adb.js's candidatePaths(). Empty for plain `npm start`.
   bundledAdbPath: process.env.MLV_BUNDLED_ADB_PATH || "",
+  // Where `npm install`'s postinstall step (and `npm run fetch-adb`) put
+  // adb.exe in plain `npm start`/browser mode — the equivalent of
+  // bundledAdbPath above, but for the source tree instead of a packaged
+  // app. Always a real path, not env-gated: locate-adb.js's existsSync
+  // check is what makes this a no-op before the fetch has run.
+  vendorAdbPath: path.join(vendorDir, "platform-tools", "adb.exe"),
   deviceSerial: process.env.DEVICE_SERIAL || "",
   wirelessAdbAddr: process.env.WIRELESS_ADB_ADDR || "",
 

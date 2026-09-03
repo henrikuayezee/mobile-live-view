@@ -14,6 +14,13 @@ function candidatePaths() {
   // zero-setup fallback for a machine with no adb installed at all, not a
   // replacement for a working custom setup.
   if (config.bundledAdbPath) candidates.push(config.bundledAdbPath);
+  // Last resort for plain `npm start`/browser mode: the copy `npm install`
+  // fetches automatically (see package.json's postinstall, and
+  // scripts/fetch-adb.js). existsSync-gated below like every other
+  // non-"adb" candidate, so this is a no-op until that fetch has actually
+  // run. The point is a fresh clone works with zero manual ADB_PATH/.env
+  // setup on any machine, not just the one where someone first hit this.
+  candidates.push(config.vendorAdbPath);
   return candidates;
 }
 

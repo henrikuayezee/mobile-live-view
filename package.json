@@ -13,6 +13,7 @@
     "phase1": "node scripts/phase1-raw-bytes.js",
     "start": "node src/server/index.js",
     "electron": "electron .",
+    "postinstall": "node scripts/postinstall.js",
     "predist": "npm run fetch-scrcpy-server && npm run fetch-adb",
     "dist": "electron-builder"
   },
