@@ -10,6 +10,23 @@ export function fetchDevices() {
   return api("/api/devices").then((r) => r.devices);
 }
 
+export function fetchDeviceListing() {
+  return api("/api/devices");
+}
+
+// Only Wi-Fi phones: a cabled phone reappears the moment it's listed again.
+export function canForget(device) {
+  return device.connectionType === "wireless";
+}
+
+export function forgetDevice(serial) {
+  return postJson("/api/devices/forget", { serial });
+}
+
+export function restoreForgottenDevices() {
+  return postJson("/api/devices/forgotten/clear", {});
+}
+
 // Maps locate-adb.js's raw adb states (device/unauthorized/offline/
 // available) plus isCurrent to the design's 4 card states, per the
 // mapping given in the handoff: device+isCurrent → connected,

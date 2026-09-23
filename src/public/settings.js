@@ -3,13 +3,16 @@
 import { api, postJson } from "./api-client.js";
 import { mountTitlebar } from "./titlebar.js";
 import {
-  fetchDevices,
+  fetchDeviceListing,
   deviceCardState,
   deviceChip,
   deviceDetailLine,
   deviceButton,
   connectDevice,
   disconnectDevice,
+  canForget,
+  forgetDevice,
+  restoreForgottenDevices,
 } from "./device-list.js";
 import {
   PRESETS,
@@ -41,6 +44,7 @@ const titlebar = mountTitlebar();
 
 const listEl = document.getElementById("device-list");
 const refreshBtn = document.getElementById("refresh");
+const forgottenNoteEl = document.getElementById("forgotten-note");
 let lastKnownResolution = null;
 
 async function refreshDevices() {
@@ -48,9 +52,10 @@ async function refreshDevices() {
   refreshBtn.textContent = "Looking…";
   refreshBtn.disabled = true;
   try {
-    const [devices, status] = await Promise.all([fetchDevices(), api("/api/status")]);
+    const [listing, status] = await Promise.all([fetchDeviceListing(), api("/api/status")]);
     lastKnownResolution = status.resolution;
-    renderDeviceList(devices);
+    renderDeviceList(listing.devices);
+    renderForgottenNote(listing.forgottenCount);
   } catch (e) {
     listEl.innerHTML = `<li class="device-list-empty-full">${e.message}</li>`;
   } finally {
@@ -69,6 +74,29 @@ function renderDeviceList(devices) {
     return;
   }
   for (const device of devices) listEl.append(buildDeviceCard(device));
+}
+
+function renderForgottenNote(count) {
+  forgottenNoteEl.hidden = !count;
+  if (!count) return;
+  forgottenNoteEl.innerHTML = "";
+  const text = document.createElement("span");
+  text.textContent = `${count === 1 ? "1 removed phone is" : `${count} removed phones are`} hidden. `;
+  const link = document.createElement("button");
+  link.type = "button";
+  link.className = "link-btn";
+  link.textContent = "Show them again";
+  link.onclick = async () => {
+    link.disabled = true;
+    try {
+      await restoreForgottenDevices();
+      await refreshDevices();
+    } catch (e) {
+      link.disabled = false;
+      alert(e.message);
+    }
+  };
+  forgottenNoteEl.append(text, link);
 }
 
 function buildDeviceCard(device) {
@@ -113,7 +141,21 @@ function buildDeviceCard(device) {
   btn.type = "button";
   btn.onclick = () => handleDeviceAction(device, spec.action, btn);
 
-  li.append(glyph, main, btn);
+  const actions = document.createElement("div");
+  actions.className = "device-card-actions";
+  actions.append(btn);
+
+  if (canForget(device)) {
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "mlv-btn secondary device-card-remove";
+    removeBtn.type = "button";
+    removeBtn.textContent = "Remove";
+    removeBtn.title = "Remove this phone from the app";
+    removeBtn.onclick = () => handleDeviceAction(device, "forget", removeBtn);
+    actions.append(removeBtn);
+  }
+
+  li.append(glyph, main, actions);
   return li;
 }
 
@@ -122,12 +164,23 @@ async function handleDeviceAction(device, action, btn) {
     location.href = `index.html?permission=${encodeURIComponent(device.serial)}&model=${encodeURIComponent(device.model || "")}`;
     return;
   }
+  if (action === "forget") {
+    const name = device.model || device.discoveredName || device.serial;
+    const ok = confirm(
+      `Remove ${name} from this app?\n\n` +
+        "It will be disconnected and hidden from the list. Pairing it again brings it back.\n\n" +
+        "To stop it connecting to this computer at all, also remove this computer on the phone: " +
+        "Wireless debugging → Paired devices."
+    );
+    if (!ok) return;
+  }
   const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = "Working…";
   try {
     if (action === "connect") await connectDevice(device.serial);
     else if (action === "disconnect") await disconnectDevice();
+    else if (action === "forget") await forgetDevice(device.serial);
     await refreshDevices();
   } catch (e) {
     btn.disabled = false;

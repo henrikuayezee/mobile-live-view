@@ -103,6 +103,30 @@ function isWirelessSerial(serial) {
   return serial.includes("_adb-tls") || /^[\d.]+:\d+$/.test(serial);
 }
 
+// mDNS names look like "adb-R5CT21KPWMZ-7PM6f1", with the hardware serial in
+// the middle; a connected mDNS serial appends "._adb-tls-connect._tcp".
+function hwSerialFromName(name) {
+  const m = /^adb-(.+)-[^-]+$/.exec((name || "").split("._adb")[0]);
+  return m ? m[1] : null;
+}
+
+// ip:port -> hardware serial. A transport's phone never changes while it
+// lives, and asking costs a ~0.5s shell round-trip per listing otherwise.
+const hwSerialCache = new Map();
+
+async function hwSerialFor(binary, device) {
+  if (device.connectionType === "usb") return device.serial;
+  const fromName = hwSerialFromName(device.discoveredName || device.serial);
+  if (fromName) return fromName;
+  if (device.state !== "device") return null;
+  if (!hwSerialCache.has(device.serial)) {
+    const hw = await adb.getSerialNo(binary, device.serial);
+    if (!hw) return null;
+    hwSerialCache.set(device.serial, hw);
+  }
+  return hwSerialCache.get(device.serial);
+}
+
 // Merges the two things adb can tell us about available phones:
 //   1. `adb devices -l`   — currently connected/authorized devices
 //   2. `adb mdns services` — wireless devices discoverable on the network,
@@ -157,7 +181,15 @@ async function listDevices(adbBinary) {
     });
   }
 
-  return [...byKey.values()];
+  // `hwSerial` lets callers spot one phone reached over several transports
+  // (adb happily keeps both an ip:port and an mDNS-name connection open).
+  const list = [...byKey.values()];
+  await Promise.all(
+    list.map(async (d) => {
+      d.hwSerial = await hwSerialFor(binary, d);
+    })
+  );
+  return list;
 }
 
 // Picks exactly one device — the original single-device behaviour, kept
@@ -211,5 +243,6 @@ module.exports = {
   resolveAdbBinary,
   listDevices,
   isWirelessSerial,
+  hwSerialFromName,
   pairWithAnyCandidate,
 };

@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const QRCode = require("qrcode");
 const adb = require("./adb/adb");
 const { resolveAdbBinary } = require("./adb/locate-adb");
+const forgotten = require("./forgotten-devices");
 
 // Android's "Pair device with QR code" flow:
 //   1. We show a QR encoding  WIFI:T:ADB;S:<name>;P:<password>;;
@@ -91,6 +92,7 @@ class QrPairingSession {
           this.message = "Phone found, pairing...";
           try {
             await adb.pair(this._adbBinary, match.address, this.password);
+            forgotten.unforgetAddress(match.address);
             this.state = "paired";
             this.pairedAddress = match.address;
             this.message = `Paired with ${match.address}.`;

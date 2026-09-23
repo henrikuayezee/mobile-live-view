@@ -59,6 +59,13 @@ whenever it is on the same network. Android switches wireless debugging off
 after the phone sleeps for a while, so if the device disappears from Settings,
 re-enable it on the phone.
 
+**Removing a phone:** click **Remove** on a Wi-Fi phone in Settings. It is
+disconnected, hidden from the list, and no longer auto-reconnected; pairing it
+again brings it back. The pairing itself is stored on the phone, so to stop it
+connecting to this computer entirely, also remove the computer on the phone
+under Wireless debugging → Paired devices. Phones on a USB cable can't be
+removed — unplug them instead.
+
 ## Using it
 
 - **Tap / drag** directly on the screen image.
@@ -78,6 +85,8 @@ from tools like Claude Code:
 | `/api/devices` | GET | — |
 | `/api/devices/connect` | POST | `{"serial": "..."}` |
 | `/api/devices/disconnect` | POST | — |
+| `/api/devices/forget` | POST | `{"serial": "..."}` (Wi-Fi phones only) |
+| `/api/devices/forgotten/clear` | POST | — |
 | `/api/pair` | POST | `{"addr": "ip:port", "code": "123456"}` |
 | `/api/pair/qr` | POST | — (returns a QR data URL) |
 | `/api/pair/qr/status` | GET | — |

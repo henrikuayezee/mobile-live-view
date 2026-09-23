@@ -10,6 +10,7 @@ const {
   pairWithAnyCandidate,
 } = require("./adb/locate-adb");
 const { ScrcpySession } = require("./scrcpy/session");
+const forgotten = require("./forgotten-devices");
 const config = require("./config");
 
 const LAST_DEVICE_FILE = path.join(config.vendorDir, "last-device.json");
@@ -37,14 +38,56 @@ class DeviceManager {
     const { adbBinary } = await resolveAdbBinary();
     const devices = await listDevices(adbBinary);
     const current = this.currentSerial;
-    return devices.map((d) => ({ ...d, isCurrent: d.serial === current }));
+    const hidden = forgotten.load();
+    const visible = devices
+      .filter((d) => !forgotten.isForgotten(d, hidden))
+      .map((d) => ({ ...d, isCurrent: d.serial === current, aliases: [] }));
+    return mergeSamePhone(visible);
   }
 
   async pair(addr, code) {
     if (this._busy) throw new BusyError();
     this._busy = true;
     try {
-      return await pairWithAnyCandidate(addr, code);
+      const result = await pairWithAnyCandidate(addr, code);
+      forgotten.unforgetAddress(addr);
+      return result;
+    } finally {
+      this._busy = false;
+    }
+  }
+
+  // Hides a wireless phone from the list, drops its adb connection, and
+  // stops auto-reconnecting to it. The pairing itself lives on the phone
+  // and can only be revoked there.
+  async forget(serial) {
+    if (this._busy) throw new BusyError();
+    this._busy = true;
+    try {
+      const { adbBinary } = await resolveAdbBinary();
+      const all = await listDevices(adbBinary);
+      const target = all.find((d) => d.serial === serial);
+      if (!target) throw new Error(`Device ${serial} not found`);
+      if (target.connectionType !== "wireless") {
+        throw new Error("A phone on a cable can't be removed — unplug it instead.");
+      }
+
+      const entries = forgotten.forget(target, all);
+
+      if (entries.some((d) => d.serial === this.currentSerial)) {
+        await this._teardown();
+        this.hub.broadcastStatus({ state: "idle", serial: null });
+      }
+      for (const d of entries) {
+        if (d.state !== "available") await adb.disconnect(adbBinary, d.serial);
+      }
+
+      const last = this.readLastDevice();
+      const lastType = last && isWirelessSerial(last) ? "wireless" : "usb";
+      if (last && forgotten.isForgotten({ serial: last, connectionType: lastType })) {
+        fs.rmSync(LAST_DEVICE_FILE, { force: true });
+      }
+      return { removed: entries.map((d) => d.serial) };
     } finally {
       this._busy = false;
     }
@@ -125,7 +168,7 @@ class DeviceManager {
   async _resolveModel(serial, { retried = false } = {}) {
     try {
       const devices = await this.listDevices();
-      const match = devices.find((d) => d.serial === serial);
+      const match = devices.find((d) => matchesSerial(d, serial));
       if ((!match || !match.model) && !retried) {
         await new Promise((r) => setTimeout(r, 400));
         return this._resolveModel(serial, { retried: true });
@@ -214,7 +257,7 @@ class DeviceManager {
     if (!serial) return null;
     try {
       const devices = await this.listDevices();
-      const match = devices.find((d) => d.serial === serial && d.state === "device");
+      const match = devices.find((d) => matchesSerial(d, serial) && d.state === "device");
       if (!match) {
         console.log(`Last device (${serial}) not available — starting idle.`);
         return null;
@@ -226,6 +269,32 @@ class DeviceManager {
       return null;
     }
   }
+}
+
+// One card per phone: adb can hold an ip:port and an mDNS-name connection
+// to the same Wi-Fi phone at once. The streaming or ready transport wins;
+// the rest are kept as `aliases` so lookups by either serial still match.
+function mergeSamePhone(devices) {
+  const rank = (d) => (d.isCurrent ? 0 : d.state === "device" ? 1 : 2);
+  const primaries = new Map();
+  const out = [];
+  for (const d of [...devices].sort((a, b) => rank(a) - rank(b))) {
+    const key = d.connectionType === "wireless" && d.hwSerial;
+    const primary = key && primaries.get(key);
+    if (!primary) {
+      if (key) primaries.set(key, d);
+      out.push(d);
+      continue;
+    }
+    primary.aliases.push(d.serial);
+    primary.address = primary.address || d.address;
+    primary.model = primary.model || d.model;
+  }
+  return devices.filter((d) => out.includes(d));
+}
+
+function matchesSerial(device, serial) {
+  return device.serial === serial || device.aliases.includes(serial);
 }
 
 class BusyError extends Error {
