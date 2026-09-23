@@ -191,8 +191,8 @@
   --qr-paper: #e9ecf0;
   position: relative;
   flex: 0 0 auto;
-  width: 164px;
-  height: 164px;
+  width: 240px;
+  height: 240px;
   /* With the single module baked into the PNG, 16px here clears the
      four-module quiet zone at this size. */
   padding: 16px;
