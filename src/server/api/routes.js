@@ -6,6 +6,7 @@ const { MOTIONEVENT_ACTION } = require("../scrcpy/constants");
 const adb = require("../adb/adb");
 const { BusyError } = require("../device-manager");
 const qrPairing = require("../qr-pairing");
+const forgotten = require("../forgotten-devices");
 const ui = require("./ui");
 const config = require("../config");
 
@@ -62,7 +63,7 @@ function buildApiRouter({ deviceManager, hub }) {
 
   router.get("/devices", async (req, res) => {
     try {
-      res.json({ devices: await deviceManager.listDevices() });
+      res.json({ devices: await deviceManager.listDevices(), forgottenCount: forgotten.count() });
     } catch (e) {
       handleError(res, e);
     }
@@ -104,6 +105,25 @@ function buildApiRouter({ deviceManager, hub }) {
   router.post("/devices/disconnect", async (req, res) => {
     try {
       await deviceManager.disconnect();
+      res.json({ ok: true });
+    } catch (e) {
+      handleError(res, e);
+    }
+  });
+
+  router.post("/devices/forget", async (req, res) => {
+    const { serial } = req.body || {};
+    if (!serial) return res.status(400).json({ error: "serial required" });
+    try {
+      res.json({ ok: true, ...(await deviceManager.forget(serial)) });
+    } catch (e) {
+      handleError(res, e);
+    }
+  });
+
+  router.post("/devices/forgotten/clear", (req, res) => {
+    try {
+      forgotten.clear();
       res.json({ ok: true });
     } catch (e) {
       handleError(res, e);

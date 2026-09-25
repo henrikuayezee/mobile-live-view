@@ -90,6 +90,20 @@ async function connect(adbBinary, addr) {
   return run(adbBinary, ["connect", addr]);
 }
 
+// The phone's hardware serial, whichever transport (USB, ip:port, mDNS name)
+// it's reached through. Null if the transport can't answer. Not
+// `adb get-serialno`: that echoes the transport name back, not the phone's.
+async function getSerialNo(adbBinary, serial) {
+  const { stdout, err } = await run(adbBinary, withSerial(serial, ["shell", "getprop", "ro.serialno"]));
+  const value = stdout.trim();
+  return err || !value || value === "unknown" ? null : value;
+}
+
+// Best-effort: "no such device" just means it was already disconnected.
+async function disconnect(adbBinary, addr) {
+  return run(adbBinary, ["disconnect", addr]);
+}
+
 async function pair(adbBinary, addr, code) {
   const { stdout, stderr, err } = await run(adbBinary, ["pair", addr, code]);
   if (err) throw new Error(`adb pair failed: ${stderr || err.message}`);
@@ -130,6 +144,8 @@ module.exports = {
   devices,
   mdnsServices,
   connect,
+  getSerialNo,
+  disconnect,
   pair,
   push,
   forward,
