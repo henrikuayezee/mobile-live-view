@@ -18,6 +18,7 @@ import {
   matchingPreset,
   summarySentence,
 } from "./quality-settings.js";
+import { postJson } from "./api-client.js";
 
 const canvas = document.getElementById("screen");
 const stage = document.getElementById("stage");
@@ -252,6 +253,7 @@ const panelTitle = document.getElementById("mlv-panel-title");
 const panelBody = document.getElementById("mlv-panel-body");
 const toggleDevicesBtn = document.getElementById("toggle-devices");
 const toggleQualityBtn = document.getElementById("toggle-quality");
+const refreshStreamBtn = document.getElementById("refresh-stream");
 let panelTab = null; // "devices" | "quality" | null
 
 function closePanel() {
@@ -390,6 +392,22 @@ async function renderQualityTab() {
 toggleDevicesBtn.onclick = () => openPanel("devices");
 toggleQualityBtn.onclick = () => openPanel("quality");
 document.getElementById("mlv-panel-close").onclick = closePanel;
+
+// Forces a fresh keyframe from the device — fixes a stream that's drifted
+// out of sync (smeared/corrupted frames) without a full disconnect and
+// reconnect. Server-side this is the exact same "request a keyframe"
+// mechanism hub.js already triggers automatically when a client falls
+// behind; this just lets a person trigger it by hand.
+refreshStreamBtn.onclick = async () => {
+  refreshStreamBtn.disabled = true;
+  try {
+    await postJson("/api/refresh", {});
+  } catch (e) {
+    showToast("Couldn't refresh", e.message, { danger: true });
+  } finally {
+    refreshStreamBtn.disabled = false;
+  }
+};
 
 // --- Compact view -----------------------------------------------------------
 // Collapses the title bar + rail to their thin strips and, inside the

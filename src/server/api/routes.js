@@ -173,6 +173,22 @@ function buildApiRouter({ deviceManager, hub }) {
     res.json({ ok: true, videoBitRate, maxFps, maxSize });
   });
 
+  // --- stream --------------------------------------------------------------
+
+  // Forces a fresh keyframe from the device without a full
+  // disconnect/reconnect — the same mechanism hub.js's backpressure logic
+  // already triggers automatically when a client falls behind (see its
+  // resync handling), just exposed here for a person to trigger by hand
+  // when the picture looks stale or glitchy but the connection itself is
+  // fine. A keyframe is self-contained (unlike the P-frames after it), so
+  // this alone is enough to correct a decoder that's drifted out of sync.
+  router.post("/refresh", (req, res) => {
+    const session = requireSession(res);
+    if (!session) return;
+    if (hub.onNeedKeyframe) hub.onNeedKeyframe();
+    res.json({ ok: true });
+  });
+
   // --- device interaction ------------------------------------------------
 
   router.get("/device-info", (req, res) => {
