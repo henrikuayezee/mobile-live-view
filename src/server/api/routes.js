@@ -195,18 +195,24 @@ function buildApiRouter({ deviceManager, hub }) {
 
   // --- stream --------------------------------------------------------------
 
-  // Forces a fresh keyframe from the device without a full
-  // disconnect/reconnect — the same mechanism hub.js's backpressure logic
-  // already triggers automatically when a client falls behind (see its
-  // resync handling), just exposed here for a person to trigger by hand
-  // when the picture looks stale or glitchy but the connection itself is
-  // fine. A keyframe is self-contained (unlike the P-frames after it), so
-  // this alone is enough to correct a decoder that's drifted out of sync.
-  router.post("/refresh", (req, res) => {
+  // Originally tried scrcpy's RESET_VIDEO control message (the same
+  // "force a fresh keyframe" mechanism hub.js's own backpressure logic
+  // uses) — but confirmed against a real device that scrcpy-server logs
+  // "Video capture reset" without actually emitting a keyframe-flagged
+  // packet afterwards, so a client waiting for one to resync could hang
+  // indefinitely. A full session reconnect is what already reliably
+  // fixes a stale/glitchy stream (a fresh connection always gets a
+  // genuine config+keyframe pair at its start, per scrcpy's own
+  // handshake) — this is that same, proven mechanism, just as one button
+  // instead of manually disconnecting and reconnecting.
+  router.post("/refresh", async (req, res) => {
     const session = requireSession(res);
     if (!session) return;
-    if (hub.onNeedKeyframe) hub.onNeedKeyframe();
-    res.json({ ok: true });
+    try {
+      res.json({ ok: true, ...(await deviceManager.connect(session.serial, { reconnect: true })) });
+    } catch (e) {
+      handleError(res, e);
+    }
   });
 
   // --- device interaction ------------------------------------------------
