@@ -1,5 +1,6 @@
 import { ScrcpyDecoder } from "./decoder.js";
 import { attachPointerInput } from "./input.js";
+import { attachPointerIndicator } from "./pointer-indicator.js";
 import { mountTitlebar } from "./titlebar.js";
 import { createStateOverlay } from "./state-overlay.js";
 import {
@@ -190,6 +191,7 @@ function sendInput(msg) {
   }
 }
 attachPointerInput(canvas, sendInput);
+attachPointerIndicator(canvas);
 
 // android/keycodes.h — mirrors src/server/scrcpy/constants.js KEYCODE.
 const KEYCODE = { BACK: 4, HOME: 3, APP_SWITCH: 187 };

@@ -97,11 +97,56 @@
   display: block;
   border-radius: 21px;
   background: var(--phone-screen-bg);
-  cursor: crosshair;
+  /* Replaced by #pointer-dot (pointer-indicator.js), which is drawn as page
+     content so screen-sharing on a call actually shows it. */
+  cursor: none;
 }
 
 #phone-frame.no-bezel #screen {
   border-radius: 2px;
+}
+
+/* White fill + dark ring: stays visible over both light and dark phone
+   screens, and big enough to survive call-video compression. */
+#pointer-dot {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55), 0 1px 6px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  z-index: 2;
+  transition: transform 0.08s ease-out, background-color 0.08s ease-out;
+}
+
+#pointer-dot.pressed {
+  transform: scale(0.75);
+  background: var(--accent);
+}
+
+.pointer-ripple {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  pointer-events: none;
+  z-index: 2;
+  animation: pointer-ripple 0.45s ease-out forwards;
+}
+
+@keyframes pointer-ripple {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(3);
+    opacity: 0;
+  }
 }
 
 /* --- Rail (56px, variant B) --- */
