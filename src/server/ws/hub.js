@@ -72,18 +72,35 @@ class Hub {
       // real payload (a full keyframe, tens of KB) a status-only client
       // asked not to receive.
       if (this.lastSessionInfo) ws.send(JSON.stringify({ type: "session", ...this.lastSessionInfo }));
-      if (ws._wantsVideo) {
+      if (ws._wantsVideo && this.lastKeyFrameMsg) {
+        // The cached pair gives an instant (slightly stale) picture, but the
+        // live delta frames that follow reference frames encoded AFTER that
+        // cached keyframe, which this client never received — decoding them
+        // smears grey blocks across the picture until the next spontaneous
+        // keyframe, which on a static screen can be a long time. So hold
+        // this client exactly like one that fell behind: no deltas until a
+        // fresh keyframe, and ask the device for one right away.
         if (this.lastConfigMsg) ws.send(this.lastConfigMsg);
-        if (this.lastKeyFrameMsg) ws.send(this.lastKeyFrameMsg);
+        ws.send(this.lastKeyFrameMsg);
+        this._startResync(ws);
       }
       ws.on("close", () => this.clients.delete(ws));
       ws.on("message", (data, isBinary) => {
-        if (isBinary || !this.onInput) return;
+        if (isBinary) return;
+        let msg;
         try {
-          this.onInput(JSON.parse(data.toString("utf8")));
+          msg = JSON.parse(data.toString("utf8"));
         } catch (e) {
           console.error("Bad input message from client:", e.message);
+          return;
         }
+        // The browser's decoder hit an error and has discarded its
+        // reference frames — same recovery as a client that fell behind.
+        if (msg.type === "needKeyframe") {
+          if (ws._wantsVideo) this._startResync(ws);
+          return;
+        }
+        if (this.onInput) this.onInput(msg);
       });
     });
   }
@@ -144,12 +161,19 @@ class Hub {
       // skipping either would itself corrupt the stream rather than just
       // delaying it.
       if (ws.bufferedAmount > MAX_BUFFERED_BYTES && !packet.config && !packet.keyFrame) {
-        ws._resyncing = true;
-        if (this.onNeedKeyframe) this.onNeedKeyframe();
+        this._startResync(ws);
         continue;
       }
       ws.send(msg);
     }
+  }
+
+  // Holds a client at its last keyframe (see broadcastVideoPacket's
+  // _resyncing branch) and asks the device for a fresh one.
+  _startResync(ws) {
+    if (ws._resyncing) return;
+    ws._resyncing = true;
+    if (this.onNeedKeyframe) this.onNeedKeyframe();
   }
 }
 

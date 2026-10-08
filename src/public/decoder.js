@@ -11,13 +11,33 @@
 //     decodable — cache it and prepend its bytes to the very next keyframe
 //     chunk instead of calling decode() on it directly.
 export class ScrcpyDecoder {
-  constructor(canvas) {
+  // onNeedKeyframe: called when the decoder has lost its reference chain
+  // and can only recover from a fresh keyframe (app.js forwards it to the
+  // server, which holds this client and asks the device for one).
+  constructor(canvas, { onNeedKeyframe = null } = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.decoder = null;
     this.configured = false;
     this.pendingConfigBytes = null;
     this.codecString = null;
+    this.onNeedKeyframe = onNeedKeyframe;
+    // A fresh decoder must start on a keyframe; a delta fed into it first
+    // errors and closes it.
+    this.awaitingKeyFrame = true;
+  }
+
+  // The decoder's reference frames are gone (decode error, or it was closed
+  // underneath us). Feeding it more delta frames would either keep erroring
+  // or decode against the wrong picture, so drop deltas until a keyframe
+  // arrives and ask for one.
+  _lostSync(reason) {
+    console.warn(`Video decoder lost sync (${reason}) — waiting for a fresh keyframe.`);
+    this.configured = false;
+    this.awaitingKeyFrame = true;
+    // Repeat requests are harmless: the server ignores them while it's
+    // already holding this client for a keyframe.
+    if (this.onNeedKeyframe) this.onNeedKeyframe();
   }
 
   // Tears everything down so the next device's config packet configures a
@@ -36,6 +56,7 @@ export class ScrcpyDecoder {
     this.configured = false;
     this.codecString = null;
     this.pendingConfigBytes = null;
+    this.awaitingKeyFrame = true;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
@@ -50,7 +71,9 @@ export class ScrcpyDecoder {
       return;
     }
 
-    if (!this.configured) {
+    if (this.awaitingKeyFrame && !packet.keyFrame) return;
+
+    if (!this.configured || !this.decoder || this.decoder.state === "closed") {
       if (!this.codecString) return; // haven't seen a config packet yet; drop until we have one
       this._configure();
     }
@@ -75,17 +98,30 @@ export class ScrcpyDecoder {
     });
     try {
       this.decoder.decode(chunk);
+      if (packet.keyFrame) this.awaitingKeyFrame = false;
     } catch (e) {
-      console.error("decode() failed, will re-configure on next keyframe:", e);
-      this.configured = false;
+      this._lostSync(`decode() threw: ${e.message}`);
     }
   }
 
   _configure() {
-    this.decoder = new VideoDecoder({
+    if (this.decoder && this.decoder.state !== "closed") {
+      try {
+        this.decoder.close();
+      } catch (_) {
+        // Already closing — nothing to do.
+      }
+    }
+    const decoder = new VideoDecoder({
       output: (frame) => this._onFrame(frame),
-      error: (e) => console.error("VideoDecoder error:", e),
+      // Asynchronous decode failures land here, not in decode()'s try/catch,
+      // and leave the decoder closed. Ignore errors from a decoder we've
+      // already replaced.
+      error: (e) => {
+        if (this.decoder === decoder) this._lostSync(`VideoDecoder error: ${e.message}`);
+      },
     });
+    this.decoder = decoder;
     this.decoder.configure({
       codec: this.codecString,
       hardwareAcceleration: "prefer-hardware",

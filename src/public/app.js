@@ -23,7 +23,9 @@ import { postJson } from "./api-client.js";
 
 const canvas = document.getElementById("screen");
 const stage = document.getElementById("stage");
-const decoder = new ScrcpyDecoder(canvas);
+const decoder = new ScrcpyDecoder(canvas, {
+  onNeedKeyframe: () => sendInput({ type: "needKeyframe" }),
+});
 let activeSocket = null;
 let lastResolution = null; // { width, height } — for the "connected" device row detail line
 

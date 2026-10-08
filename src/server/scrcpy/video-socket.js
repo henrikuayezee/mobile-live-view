@@ -27,6 +27,7 @@ const STAGE = {
 //   64 bytes  device name (UTF-8, null-padded)
 //   4 bytes   codec id (BE)
 //   12 bytes  session meta: flags(4, BE) + width(4, BE) + height(4, BE)
+//             (re-sent mid-stream on every capture restart; see FRAME_HEADER)
 //   then repeating 12-byte frame headers + payload:
 //     8 bytes  ptsAndFlags (BE): bit63=0 always (session-only bit), bit62=config,
 //              bit61=keyframe, remaining bits = pts (config packets: flags only, no pts)
@@ -95,6 +96,23 @@ class VideoSocketParser extends EventEmitter {
           break;
         }
         case STAGE.FRAME_HEADER: {
+          // scrcpy re-sends a 12-byte session packet (flags + width + height)
+          // every time capture restarts — a RESET_VIDEO keyframe request, a
+          // rotation, a display change (SurfaceEncoder's loop calls
+          // writeSessionMeta before each encode). It's the same length as a
+          // frame header and marked by the top bit, which a frame header
+          // never sets. Reading it as a frame header misaligns every byte
+          // after it: garbage gets forwarded as video (grey blocky smear in
+          // the browser) or the parser waits forever on a bogus payload size
+          // (frozen picture).
+          if (this.buffer[0] & 0x80) {
+            const width = this.buffer.readUInt32BE(4);
+            const height = this.buffer.readUInt32BE(8);
+            this.buffer = this.buffer.subarray(12);
+            this.emit("session", { width, height });
+            break;
+          }
+
           const ptsAndFlags = this.buffer.readBigUInt64BE(0);
           const size = this.buffer.readUInt32BE(8);
           this.buffer = this.buffer.subarray(12);
