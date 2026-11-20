@@ -145,7 +145,9 @@ if (!gotLock) {
   // stops the server the browser tab depends on.
   ipcMain.on("mlv:open-in-browser", () => {
     if (!serverPort) return;
-    shell.openExternal(`http://localhost:${serverPort}/`);
+    // *.localhost resolves to this machine in every modern browser, no setup
+    // needed, so the address bar shows the app's name rather than "localhost".
+    shell.openExternal(`http://mobile-live-view.localhost:${serverPort}/`);
     mainWindow?.minimize();
   });
 

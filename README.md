@@ -50,7 +50,7 @@ so if the phone disappears from the list, switch it back on.
 - **↗ Open in browser** opens the same live view in your web browser
   (Chrome or Edge). The app minimizes itself and must stay open, since it's
   what the browser connects to. Once the app is running you can also just go
-  to http://localhost:8000.
+  to http://mobile-live-view.localhost:8000.
 - **Phones** (📱) switches between paired phones. **Picture & speed** (⚙)
   trades sharpness for less delay. Pick "Weak Wi-Fi" if the picture lags.
 
@@ -67,7 +67,7 @@ Requires Node.js. `npm install` also downloads adb and the scrcpy server into
 `npm run fetch-scrcpy-server` later).
 
 - **In a browser:** double-click `launch.bat`, or `npm start` and open
-  http://localhost:8000. A machine that only uses this route can run
+  http://mobile-live-view.localhost:8000. A machine that only uses this route can run
   `npm install --omit=dev` to skip Electron (100 MB+).
 - **As the desktop app:** `npm run electron`.
 - **Build the installer:** `npm run dist`. Output goes to `dist/`. Building

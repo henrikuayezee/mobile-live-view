@@ -98,7 +98,10 @@ function openBrowser(url) {
 
   app.use("/api", buildApiRouter({ deviceManager, hub }));
 
-  const url = `http://localhost:${config.webPort}`;
+  // Browsers resolve any *.localhost name to this machine with no hosts-file
+  // setup, so the app can use its own name in the address bar. Plain
+  // localhost still works too; only the friendly name is ever shown.
+  const url = `http://mobile-live-view.localhost:${config.webPort}`;
 
   server.on("error", async (err) => {
     if (err.code === "EADDRINUSE") {
