@@ -23,4 +23,5 @@ contextBridge.exposeInMainWorld("mlvWindow", {
   enterCompact: (phoneWidth, phoneHeight) =>
     ipcRenderer.send("mlv:enter-compact", { phoneWidth, phoneHeight }),
   exitCompact: () => ipcRenderer.send("mlv:exit-compact"),
+  openInBrowser: () => ipcRenderer.send("mlv:open-in-browser"),
 });

@@ -89,10 +89,19 @@ export function createTitlebar() {
     if (el.classList.contains("collapsed")) setCollapsed(false);
   });
 
-  try {
-    if (localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1") setCollapsed(true);
-  } catch (_) {
-    // Same as above — default to expanded.
+  // The desktop app always starts expanded: its window is frameless, so this
+  // bar is the only place minimize/maximize/close live, and a remembered
+  // collapse left a full-size window opening with no visible way to manage
+  // it. (Compact view, the usual reason to collapse, isn't remembered
+  // either.) Browser tabs keep the remembered preference.
+  if (window.mlvWindow) {
+    document.documentElement.classList.add("mlv-desktop");
+  } else {
+    try {
+      if (localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1") setCollapsed(true);
+    } catch (_) {
+      // Same as above — default to expanded.
+    }
   }
 
   // window.mlvWindow is exposed by electron/preload.js — absent when this

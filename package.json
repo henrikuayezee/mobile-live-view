@@ -1,6 +1,6 @@
 {
   "name": "mobile-live-view",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "See and control an Android phone from your Windows PC, over Wi-Fi or USB.",
   "author": "Henry Quayezee",

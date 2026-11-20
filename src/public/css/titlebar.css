@@ -58,8 +58,45 @@
    noticeably in compact view, where the strip is nearly the whole window).
    Fully removing the children from layout means only the bar's own
    drag region remains, so the entire collapsed strip is draggable. */
-#mlv-titlebar.collapsed > *:not(#mlv-titlebar-spacer) {
+#mlv-titlebar.collapsed > *:not(#mlv-titlebar-spacer):not(#mlv-titlebar-controls) {
   display: none;
+}
+
+/* The window controls get special treatment when collapsed: in the desktop
+   app they're the only minimize/maximize/close the window has, so they stay
+   reachable by hovering the strip — floating over the top-right corner
+   rather than expanding the bar, which in compact view would push the phone
+   down. In a browser tab they control nothing, so they simply stay hidden. */
+#mlv-titlebar.collapsed {
+  overflow: visible;
+  z-index: 50;
+}
+
+#mlv-titlebar.collapsed #mlv-titlebar-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 32px;
+  background: rgba(32, 32, 32, 0.96);
+  border-bottom-left-radius: var(--radius-control-lg);
+  box-shadow: var(--shadow-pill);
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+
+#mlv-titlebar.collapsed #mlv-titlebar-controls button {
+  height: 32px;
+}
+
+:root:not(.mlv-desktop) #mlv-titlebar.collapsed #mlv-titlebar-controls {
+  display: none;
+}
+
+#mlv-titlebar.collapsed:hover #mlv-titlebar-controls {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 #mlv-titlebar-mark {

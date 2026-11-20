@@ -246,6 +246,11 @@
   text-decoration: none;
 }
 
+/* .rail-btn's display:flex would otherwise override the hidden attribute. */
+.rail-btn[hidden] {
+  display: none;
+}
+
 .rail-btn:hover {
   background: var(--fill-hover-1);
 }

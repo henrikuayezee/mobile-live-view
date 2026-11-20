@@ -3,7 +3,7 @@
 const path = require("path");
 const fs = require("fs");
 const { fork } = require("child_process");
-const { app, BrowserWindow, ipcMain, dialog, screen } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, screen, shell } = require("electron");
 const config = require("../src/server/config");
 
 // Only one window makes sense for a single-device live view — a second
@@ -18,6 +18,7 @@ if (!gotLock) {
   // The window's bounds right before "compact view" shrank it — restored
   // verbatim on exit. Also doubles as the "are we currently compact" flag.
   let preCompactBounds = null;
+  let serverPort = null;
 
   app.on("second-instance", () => {
     if (!mainWindow) return;
@@ -103,6 +104,7 @@ if (!gotLock) {
   }
 
   function createWindow(port) {
+    serverPort = port;
     mainWindow = new BrowserWindow({
       width: 1180,
       height: 780,
@@ -136,6 +138,16 @@ if (!gotLock) {
   ipcMain.on("mlv:unmaximize", () => mainWindow?.unmaximize());
   ipcMain.on("mlv:close", () => mainWindow?.close());
   ipcMain.handle("mlv:isMaximized", () => mainWindow?.isMaximized() ?? false);
+
+  // The server this window shows is a normal local web server, so the same
+  // live view works in any browser tab alongside the app window. Minimizes
+  // the app rather than closing it: closing the window quits the app, which
+  // stops the server the browser tab depends on.
+  ipcMain.on("mlv:open-in-browser", () => {
+    if (!serverPort) return;
+    shell.openExternal(`http://localhost:${serverPort}/`);
+    mainWindow?.minimize();
+  });
 
   // "Compact view" (app.js) — collapses the title bar and rail down to
   // their thin strips and shrinks the actual OS window to exactly the

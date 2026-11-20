@@ -413,6 +413,14 @@ refreshStreamBtn.onclick = async () => {
   }
 };
 
+// --- Open in browser ----------------------------------------------------------
+// Desktop app only: a browser tab is already "in the browser".
+const openBrowserBtn = document.getElementById("open-browser");
+if (window.mlvWindow?.openInBrowser) {
+  openBrowserBtn.hidden = false;
+  openBrowserBtn.onclick = () => window.mlvWindow.openInBrowser();
+}
+
 // --- Compact view -----------------------------------------------------------
 // Collapses the title bar + rail to their thin strips and, inside the
 // packaged Electron app, also shrinks the real OS window to exactly the

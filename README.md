@@ -45,7 +45,12 @@ so if the phone disappears from the list, switch it back on.
 - The sidebar's **◀ ● ■** are Back, Home and Recent apps.
 - **↻ Refresh** fixes a frozen or glitchy picture without reconnecting.
 - **▢ Compact view** hides the sidebar and title bar and shrinks the window
-  to fit the phone exactly.
+  to fit the phone exactly. Point at the thin strip at the top to get the
+  minimize/maximize/close buttons back.
+- **↗ Open in browser** opens the same live view in your web browser
+  (Chrome or Edge). The app minimizes itself and must stay open, since it's
+  what the browser connects to. Once the app is running you can also just go
+  to http://localhost:8000.
 - **Phones** (📱) switches between paired phones. **Picture & speed** (⚙)
   trades sharpness for less delay. Pick "Weak Wi-Fi" if the picture lags.
 
