@@ -70,11 +70,12 @@
   flex: 0 0 auto;
 }
 
+/* Same mark as the app icon (build/icon.svg): phone outline + live dot. */
 #mlv-titlebar-mark .glyph {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1.5px solid var(--accent);
+  width: 10px;
+  height: 17px;
+  border-radius: 3px;
+  border: 1.6px solid var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -82,11 +83,10 @@
 
 #mlv-titlebar-mark .glyph::after {
   content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
   background: var(--accent);
-  opacity: 0.75;
 }
 
 #mlv-titlebar-mark .name {

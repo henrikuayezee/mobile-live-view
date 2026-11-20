@@ -193,7 +193,7 @@ async function listDevices(adbBinary) {
 }
 
 // Picks exactly one device — the original single-device behaviour, kept
-// for CLI callers (scripts/check-adb.js) and auto-reconnect.
+// for auto-reconnect.
 async function resolveAdb(explicitSerial) {
   // Reuses the device list resolveAdbBinary() already fetched rather than
   // shelling out again — avoids a TOCTOU gap where the device set changes

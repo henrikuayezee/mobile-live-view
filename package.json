@@ -1,16 +1,14 @@
 {
   "name": "mobile-live-view",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "Local browser-based live view and remote control for a connected Android device, using scrcpy-server over adb.",
+  "description": "See and control an Android phone from your Windows PC, over Wi-Fi or USB.",
+  "author": "Henry Quayezee",
   "type": "commonjs",
   "main": "electron/main.js",
   "scripts": {
-    "check-adb": "node scripts/check-adb.js",
-    "pair-wireless": "node scripts/pair-wireless.js",
     "fetch-scrcpy-server": "node scripts/fetch-scrcpy-server.js",
     "fetch-adb": "node scripts/fetch-adb.js",
-    "phase1": "node scripts/phase1-raw-bytes.js",
     "start": "node src/server/index.js",
     "electron": "electron .",
     "postinstall": "node scripts/postinstall.js",
@@ -30,7 +28,8 @@
     "appId": "dev.henryquayezee.mobileliveview",
     "productName": "Mobile Live View",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "src/**/*",
@@ -49,12 +48,14 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Mobile-Live-View-Setup-${version}.${ext}"
     }
   },
   "allowScripts": {

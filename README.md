@@ -1,83 +1,92 @@
 # Mobile Live View
 
-View and control an Android phone from your browser. Streams the device screen
-live (H.264 via scrcpy's on-device server, decoded in-browser with WebCodecs)
-and sends taps, swipes, typing, and hardware keys back to it.
+See and control an Android phone from your Windows PC: its screen live in a
+window, with clicks, scrolling and typing sent back to the phone. Works over
+Wi-Fi or a USB cable.
 
-## Running it
+## Install
 
-Two ways to run the exact same app — same server, same UI code, just a
-different shell around it. There's no separate "browser version" to keep in
-sync; picking one doesn't require anything from the other.
+1. Download **`Mobile-Live-View-Setup-<version>.exe`** from the
+   [latest release](../../releases/latest).
+2. Run it. Windows will probably show **"Windows protected your PC"**, because
+   the installer isn't code-signed. Click **More info → Run anyway**.
+3. Open **Mobile Live View** from the Start menu.
 
-**In a browser** — double-click **`launch.bat`**. It installs dependencies
-and downloads the scrcpy server component on first run, then starts the
-server and opens your browser automatically.
+Nothing else needs installing; everything the app needs is inside the
+installer.
 
-The server runs in a minimized window titled "Mobile Live View Server" —
-**close that window to stop it**. If it ever fails to start, that window
-stays open with the error visible instead of closing instantly.
+## Connect a phone
 
-(`server.bat` is the helper `launch.bat` starts; you don't run it directly.)
+The phone needs **Developer options** turned on, once:
+**Settings → About phone → Software information**, then tap **Build number**
+seven times. (On some phones Build number is directly under About phone.)
 
-Running it a second time won't start a duplicate; it just opens the browser
-onto the instance that's already running.
+Then click **Setup** (☰, bottom of the sidebar) in the app and pick one of:
 
-On a machine that will only ever use the browser route, skip installing
-Electron's devDependencies (a 100MB+ download it doesn't need) by running
-`npm install --omit=dev` instead of a plain `npm install` before the first
-`launch.bat` run — everything above behaves identically either way.
+- **By scanning a code (Wi-Fi, easiest).** The phone and PC must be on the same
+  Wi-Fi network. On the phone, open **Developer options → Wireless debugging →
+  Pair device with QR code**, click **Show the code** in the app, and point the
+  phone at it.
+- **With a cable (most reliable).** On the phone turn on **Developer options →
+  USB debugging**, plug it in, and tap **Allow** on the prompt the phone shows.
+- **By typing a code.** A fallback for networks where scanning doesn't work:
+  use **Pair device with pairing code** on the phone and type what it shows
+  into the app.
 
-**As a native Windows app** — `npm install` (full install, no `--omit=dev`),
-then `npm run electron` to run it unpackaged, or `npm run dist` to build an
-installable `.exe` (adds a real title bar with working window controls, and
-a "compact view" button that snaps the window to the phone with no black
-gutter around it — neither makes sense in a browser tab, which is why
-they're Electron-only). See `electron/main.js` for how it forks the same
-server this file describes.
+Pairing only happens once. After that the app reconnects to the phone by
+itself. Android turns Wireless debugging off when the phone sleeps for a while,
+so if the phone disappears from the list, switch it back on.
 
-## Connecting a phone
+## Use it
 
-The app reconnects to the last device you used, if it's available. Otherwise
-open **⚙ Settings** to pick one.
+- **Click or drag** on the phone's screen to tap and swipe.
+- **Scroll** with your mouse wheel or touchpad.
+- **Type** with the phone's own on-screen keyboard.
+- The sidebar's **◀ ● ■** are Back, Home and Recent apps.
+- **↻ Refresh** fixes a frozen or glitchy picture without reconnecting.
+- **▢ Compact view** hides the sidebar and title bar and shrinks the window
+  to fit the phone exactly.
+- **Phones** (📱) switches between paired phones. **Picture & speed** (⚙)
+  trades sharpness for less delay. Pick "Weak Wi-Fi" if the picture lags.
 
-**Over USB:** enable Developer options → USB debugging, plug the phone in, and
-accept the debugging prompt on the phone. It appears in Settings.
+One phone is shown at a time.
 
-**Over Wi-Fi (no cable), easiest:** in Settings click **Show pairing QR code**,
-then on the phone go to Developer options → Wireless debugging → "Pair device
-with QR code" and scan it. The app discovers the phone and pairs automatically;
-there is nothing to type.
+---
 
-**Over Wi-Fi, manual:** on the phone use "Pair device with pairing code"
-instead, and enter the address and 6-digit code it shows into the pairing form
-in Settings. Note that screen shows a *different* port from the main Wireless
-debugging screen — use whichever is displayed alongside the code you are typing.
+## For developers
 
-Pairing is a one-time step; afterwards the phone is discovered automatically
-whenever it is on the same network. Android switches wireless debugging off
-after the phone sleeps for a while, so if the device disappears from Settings,
-re-enable it on the phone.
+### Run from source
 
-**Removing a phone:** click **Remove** on a Wi-Fi phone in Settings. It is
-disconnected, hidden from the list, and no longer auto-reconnected; pairing it
-again brings it back. The pairing itself is stored on the phone, so to stop it
-connecting to this computer entirely, also remove the computer on the phone
-under Wireless debugging → Paired devices. Phones on a USB cable can't be
-removed — unplug them instead.
+Requires Node.js. `npm install` also downloads adb and the scrcpy server into
+`vendor/` (if that fails offline, run `npm run fetch-adb` and
+`npm run fetch-scrcpy-server` later).
 
-## Using it
+- **In a browser:** double-click `launch.bat`, or `npm start` and open
+  http://localhost:8000. A machine that only uses this route can run
+  `npm install --omit=dev` to skip Electron (100 MB+).
+- **As the desktop app:** `npm run electron`.
+- **Build the installer:** `npm run dist`. Output goes to `dist/`. Building
+  needs Windows Developer Mode turned on (electron-builder extracts files that
+  contain symlinks).
 
-- **Tap / drag** directly on the screen image.
-- **◀ ● ▢** buttons in the side rail are Back, Home, and Recent apps.
-- **Fullscreen** (the button, or press `F`) gives the biggest picture: the
-  device image is limited by window *height*, so reclaiming the browser chrome
-  and taskbar matters more than screen width.
+The desktop app is a thin Electron shell (`electron/main.js`) that runs the
+same server as `npm start` and shows it in a window.
 
-## HTTP API
+### Configuration
 
-The same actions are available over HTTP, for scripting or driving the device
-from tools like Claude Code:
+Optional. Copy `.env.example` to `.env`:
+
+- `ADB_PATH` / `ADB_FALLBACK_PATH`: use a specific adb. Normally unnecessary;
+  the app finds a working one, falling back to the copy in `vendor/`.
+- `WEB_PORT`: default 8000.
+- `DEVICE_SERIAL`: always use this phone instead of the last one used.
+- `VIDEO_BIT_RATE`, `MAX_FPS`, `MAX_SIZE`: stream quality defaults. The
+  Picture & speed settings in the app override these.
+
+### HTTP API
+
+Everything the UI does is also available over HTTP, for scripts or tools like
+Claude Code:
 
 | Endpoint | Method | Body |
 |---|---|---|
@@ -91,6 +100,7 @@ from tools like Claude Code:
 | `/api/pair/qr` | POST | — (returns a QR data URL) |
 | `/api/pair/qr/status` | GET | — |
 | `/api/pair/qr/cancel` | POST | — |
+| `/api/refresh` | POST | — |
 | `/api/device-info` | GET | — |
 | `/api/screenshot` | GET | — (returns PNG) |
 | `/api/tap` | POST | `{"x": 100, "y": 200}` |
@@ -106,38 +116,8 @@ curl -X POST http://localhost:8000/api/tap \
   -H "Content-Type: application/json" -d '{"x":720,"y":1500}'
 ```
 
-## Configuration
+### Credits
 
-Optional — copy `.env.example` to `.env` to override defaults:
-
-- `ADB_PATH` / `ADB_FALLBACK_PATH` — which adb binary to use. The app probes
-  candidates and picks one that can actually see a device, falling all the
-  way back to the copy `npm install` fetched into `vendor/` automatically —
-  so this is only needed to point at a *specific* adb (e.g. one tied to a
-  particular USB driver), not just to get one working at all.
-- `WEB_PORT` — defaults to 8000.
-- `DEVICE_SERIAL` — pin to one device instead of remembering the last used.
-- `VIDEO_BIT_RATE` — encoder bitrate, default 16000000 (16 Mbps). scrcpy's own
-  default is 8 Mbps, which looks soft on a high-resolution phone. Lower it if
-  the stream lags over Wi-Fi.
-- `MAX_FPS` / `MAX_SIZE` — cap frame rate, or downscale before encoding, to
-  reduce bandwidth on a slow link.
-
-## Requirements
-
-Node.js (from nodejs.org) and a Chromium-based browser (Chrome or Edge) for
-WebCodecs support.
-
-adb does NOT need to be pre-installed for the browser route either: `npm
-install`'s postinstall step fetches a copy of adb and the scrcpy server into
-`vendor/` automatically, and the app finds it there with no `ADB_PATH` or
-`.env` needed (see Configuration above). This repeats on every fresh clone —
-moving to another computer just means `git clone` + `npm install` again, not
-a manual adb install. If that fetch fails (offline install, flaky network),
-it's a warning, not a failed install — run `npm run fetch-adb` and `npm run
-fetch-scrcpy-server` by hand once you're online, or set `ADB_PATH` to an adb
-you already have.
-
-The Windows app doesn't need any of that either — it bundles its own adb and
-the scrcpy server inside the installer, so a clean machine with no Node, no
-Android SDK, and no adb works out of the box.
+Screen streaming uses the on-device server from
+[scrcpy](https://github.com/Genymobile/scrcpy) (Apache-2.0). The installer
+bundles Google's Android platform-tools `adb`.
